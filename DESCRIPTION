@@ -10,7 +10,9 @@ Roxygen: list(markdown = TRUE)
 LazyData: true
 Imports:
     yaml,
-    rlang
+    rlang,
+    jsonlite,
+    uuid
 RoxygenNote: 7.2.3
 Suggests:
     testthat (>= 3.0.0)

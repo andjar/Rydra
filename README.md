@@ -208,3 +208,51 @@ If a condition's expression is TRUE, the numeric value found at the specified `c
 ### Output Transformation
 
 The `output_transformation` section of the YAML configuration file allows you to apply a final transformation to the calculated score. This can be any valid R expression.
+
+## Logging Calculations
+
+`Rydra` supports optional logging of calculation details to JSON files. This can be useful for debugging, auditing, or reproducing specific calculations.
+
+To enable logging, add a `logging` section to the root of your YAML configuration file:
+
+```yaml
+# At the root of your config.yaml, alongside model_name, centering, etc.
+logging:
+  enabled: true  # Set to true to enable logging
+  path: "calculation_logs" # Optional: directory to store log files
+                           # Defaults to "./rydra_logs/" if enabled and path is not specified
+                           # Path is relative to the current working directory when rydra_calculate is run.
+
+model_name: "simplified_model"
+centering:
+  # ... rest of your configuration
+```
+
+### Log File Content
+
+When logging is enabled, `Rydra` will create a JSON file for each call to `rydra_calculate`. The files are named using a timestamp and a unique UUID, for example: `20231027153000123456_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.json`.
+
+Each log file contains the following information:
+
+*   `timestamp`: The date and time (ISO 8601 format) when the calculation was performed.
+*   `invocation_params`:
+    *   `config_path`: Path to the YAML configuration file used.
+    *   `model_name`: The name of the model used from the configuration.
+    *   `data`: The original input data provided to `rydra_calculate`.
+*   `model_config_used`: The specific part of the configuration that corresponds to the `model_name` used for the calculation.
+*   `intermediate_values`:
+    *   `input_data_processed_for_calc`: Input data after initial processing (e.g., if a multi-row data frame was input, only the first row is taken and converted to a list).
+    *   `transformed_data`: The data after all transformations have been applied.
+    *   `factor_coeffs_sum`: The sum of coefficients derived from the `factors` section.
+    *   `base_score`: The score calculated from intercepts and direct coefficients multiplied by transformed data values.
+    *   `conditional_coeffs_sum`: The sum of coefficients applied due to met `conditions`.
+    *   `total_score_pre_output_transform`: The total score before the final `output_transformation` is applied.
+*   `final_result`: The final result of the calculation after all steps, including the output transformation.
+
+### Dependencies for Logging
+
+The logging feature uses the following R packages, which will be installed as dependencies of `Rydra`:
+*   `jsonlite`: For writing data to JSON format.
+*   `uuid`: For generating unique identifiers for log filenames.
+
+If logging fails for any reason (e.g., the specified path is not writable), `Rydra` will issue a warning, but the main calculation will proceed as normal.
