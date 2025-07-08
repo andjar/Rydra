@@ -41,7 +41,9 @@
   center_variable = Rydra::center_variable,
   square_variable = Rydra::square_variable,
   log_transform = Rydra::log_transform,
-  exp_transform = Rydra::exp_transform
+  exp_transform = Rydra::exp_transform,
+  multiply_by = Rydra::multiply_by,
+  add_value = Rydra::add_value
 )
 
 rydra_calculate <- function(config_path, data, model_name = "plgf_model", transformations = .default_rydra_transformations) {
@@ -219,16 +221,62 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
   # 6. Apply output transformation
   final_result <- total_score
   if (!is.null(model_config$output_transformation) && nzchar(model_config$output_transformation)) {
+    output_transform_str <- model_config$output_transformation
+
+    # Attempt to parse the function name from the string.
+    # This regex extracts the function name before the first parenthesis.
+    # Example: "multiply_by(result, 100)" -> "multiply_by"
+    # Example: "log(result)" -> "log"
+    # Example: "unknown_func(result)" -> "unknown_func"
+    # Example: "result * 10" -> "result " (will not be found in transformations)
+    # Example: "my_custom_function ( result, 10 )" -> "my_custom_function " (trim whitespace later)
+    parsed_function_name_match <- regexpr("^\\s*([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\(", output_transform_str)
+
+    if (parsed_function_name_match == -1) {
+      stop(paste0("Output transformation '", output_transform_str, "' is not a valid function call format. Expected format like 'function_name(arguments)'."))
+    }
+
+    parsed_function_name <- sub("^\\s*([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\(.*$", "\\1", output_transform_str)
+
+    # Check if the parsed function name is in the list of available transformations
+    if (!(parsed_function_name %in% names(transformations))) {
+      stop(paste0("Output transformation function '", parsed_function_name, "' from string '", output_transform_str, "' is not found in the available transformations list."))
+    }
+
     # The output transformation formula needs access to 'result' (total_score)
-    # and potentially other config values.
+    # and the allowed transformation functions.
     eval_env_output <- new.env(parent = emptyenv())
     assign("result", total_score, envir = eval_env_output)
-    # Add config elements if needed by output_transformation, e.g. config$constants$X
+
+    # Add available transformation functions to the evaluation environment
+    # This makes functions like multiply_by, log_transform etc. directly callable.
+    if (!is.null(transformations) && length(transformations) > 0) {
+      for (name in names(transformations)) {
+        if (is.function(transformations[[name]])) {
+          assign(name, transformations[[name]], envir = eval_env_output)
+        }
+      }
+    }
+    # Add global centering values from the full_config to the environment, if any (though less common for output transforms)
+    if (!is.null(config$centering)) {
+      for (name in names(config$centering)) {
+        assign(name, config$centering[[name]], envir = eval_env_output)
+      }
+      assign("centering", config$centering, envir = eval_env_output)
+    }
+
 
     tryCatch({
-      final_result <- eval(parse(text = model_config$output_transformation), envir = eval_env_output)
+      final_result <- eval(parse(text = output_transform_str), envir = eval_env_output)
     }, error = function(e) {
-      stop(paste0("Error evaluating output transformation '", model_config$output_transformation, "': ", e$message))
+      # Check if the error is due to the function itself (e.g. wrong number of args)
+      # or something else like a missing variable *within* the arguments.
+      detailed_error_message <- e$message
+      # Check if the error message already contains the output_transform_str to avoid redundancy
+      if (!grepl(output_transform_str, detailed_error_message, fixed = TRUE)) {
+         detailed_error_message <- paste0("in '", output_transform_str, "': ", detailed_error_message)
+      }
+      stop(paste0("Error evaluating output transformation ", detailed_error_message))
     })
   }
 

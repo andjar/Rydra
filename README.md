@@ -189,17 +189,44 @@ If a condition's expression is TRUE, the numeric value found at the specified `c
 
 ### Output Transformation
 
-The `output_transformation` section of the YAML configuration file allows you to apply a final transformation to the calculated score. This should be a simple R expression that primarily operates on a variable named `result`, which holds the total aggregated score before this final step. It's intended for final scaling, unit conversions, or applying a cap/floor.
+The `output_transformation` section of the YAML configuration file allows you to apply a final transformation to the calculated score. This transformation **must** be a call to a function that is available in the `transformations` list provided to (or defaulted by) the `rydra_calculate` function.
 
-For example:
+The transformation string should be in the format `"function_name(arguments)"`. The special variable `result` (which holds the total aggregated score before this final step) **must** be used as one of the arguments to the function. This mechanism is intended for final scaling, unit conversions, or applying caps/floors using predefined and allowed transformation functions. Raw R code or arbitrary expressions are no longer permitted here to ensure better control and clarity.
+
+Available built-in transformation functions (which can be used if they are part of the active `transformations` list) suitable for output transformations include:
+*   `multiply_by(value, multiplier)`: Multiplies the `value` by `multiplier`.
+*   `add_value(value, term)`: Adds `term` to `value`.
+*   Standard R functions like `log()`, `exp()`, `pmin()`, `pmax()` can also be used if they are part of the `transformations` list (note: base R functions are not included by default in the `transformations` list; only those explicitly defined in `Rydra:::.default_rydra_transformations` or user-provided lists). To use base R functions, you would typically wrap them or add them to the list passed to `rydra_calculate`. For simplicity, `log_transform` and `exp_transform` are provided by default.
+
+**Examples in YAML:**
+
+To scale the result by 100:
 ```yaml
-output_transformation: "result * 100" # Scales the result
+output_transformation: "multiply_by(result, 100)"
 ```
-Or:
+
+To add 5 to the result:
 ```yaml
-output_transformation: "pmin(result, 10)" # Caps the result at 10
+output_transformation: "add_value(result, 5)"
 ```
-While complex R expressions are possible, simpler, more direct transformations are recommended for clarity and maintainability.
+
+To cap the result at 10, assuming `pmin` was made available in the `transformations` list (e.g., `transformations = list(pmin = base::pmin, ...)`):
+```yaml
+# This example assumes pmin is available in the transformations list
+# output_transformation: "pmin(result, 10)"
+```
+If you need `pmin` and it's not in your default transformation list, you would have to add it when calling `rydra_calculate`.
+A more Rydra-idiomatic way if `pmin` is not directly available would be to define a specific transformation like `cap_value(value, cap)` and use that.
+
+The `log_transform` function (available by default) can also be used:
+```yaml
+output_transformation: "log_transform(result, base = 10)"
+```
+
+**Important:**
+*   The function used (e.g., `multiply_by`) must be present in the named list of functions provided via the `transformations` argument to `rydra_calculate` (or be part of Rydra's default set).
+*   The expression must be a single function call.
+*   The `result` variable must be explicitly passed as an argument to the function.
 
 ### Example: Score Calculation Walkthrough
 
