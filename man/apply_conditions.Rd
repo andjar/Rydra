@@ -7,11 +7,11 @@
 apply_conditions(model_config, data)
 }
 \arguments{
-\item{model_config}{The specific configuration block for the current model
-(e.g., \code{config[[model_name]]}), which might contain a \code{conditions} list.}
+\item{model_config}{The specific model configuration list (e.g., \code{config[[model_name]]})
+containing condition definitions.}
 
-\item{data}{A list containing the input data (typically transformed data).
-Formulas in conditions will be evaluated against this data.}
+\item{data}{A list containing the input data, typically after transformations.
+Condition formulas are evaluated against this data.}
 }
 \value{
 A numeric value representing the sum of coefficients from all met conditions.

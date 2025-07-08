@@ -4,9 +4,9 @@
 #' For each defined factor, it finds the corresponding value in the input data,
 #' looks up the coefficient for that level, and adds it to a running total.
 #'
-#' @param config A list representing the parsed YAML configuration.
-#' @param data A list containing the input data.
-#' @param model_name The name of the model configuration block in the YAML.
+#' @param config The full configuration list, typically loaded from a YAML file.
+#' @param data A list containing the input data, typically after transformations.
+#' @param model_name The name of the specific model configuration block to be used from the `config`.
 #' @return A numeric value representing the sum of coefficients from all factors.
 #' @keywords internal
 apply_factors <- function(config, data, model_name) {
@@ -65,10 +65,10 @@ apply_factors <- function(config, data, model_name) {
 #' of the input data. If true, it resolves the specified coefficient path within
 #' the model's configuration and adds it to a running total.
 #'
-#' @param model_config The specific configuration block for the current model
-#'        (e.g., `config[[model_name]]`), which might contain a `conditions` list.
-#' @param data A list containing the input data (typically transformed data).
-#'        Formulas in conditions will be evaluated against this data.
+#' @param model_config The specific model configuration list (e.g., `config[[model_name]]`)
+#'        containing condition definitions.
+#' @param data A list containing the input data, typically after transformations.
+#'        Condition formulas are evaluated against this data.
 #' @return A numeric value representing the sum of coefficients from all met conditions.
 #' @keywords internal
 apply_conditions <- function(model_config, data) {

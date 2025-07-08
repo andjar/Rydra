@@ -32,16 +32,16 @@
 #'
 #' # 2. Prepare your input data as a list or single-row data frame
 #' input_data <- list(
-#'   biochemical_ga = 12, # weeks
-#'   weight = 70,         # kg
-#'   age = 30,            # years
-#'   plgf_machine = 1,    # Corresponds to 'Delfia' in example config
-#'   race = 1,            # e.g., Caucasian/Other
-#'   smoking = 0,         # 0 for No, 1 for Yes
-#'   diabetes_type_i = 0, # 0 for No, 1 for Yes
-#'   diabetes_type_ii = 0,# 0 for No, 1 for Yes
-#'   conception = 1,      # e.g., 1 for Spontaneous, 3 for IVF
-#'   previous = 0         # e.g., 0 for Nulliparous
+#'   biochemical_ga    = 12, # weeks
+#'   weight            = 70, # kg
+#'   age               = 30, # years
+#'   plgf_machine      = 1,  # Corresponds to 'Delfia' in example config
+#'   race              = 1,  # e.g., Caucasian/Other
+#'   smoking           = 0,  # 0 for No, 1 for Yes
+#'   diabetes_type_i   = 0,  # 0 for No, 1 for Yes
+#'   diabetes_type_ii  = 0,  # 0 for No, 1 for Yes
+#'   conception        = 1,  # e.g., 1 for Spontaneous, 3 for IVF
+#'   previous          = 0   # e.g., 0 for Nulliparous
 #'   # ... any other variables required by your config's transformations or conditions
 #' )
 #'
