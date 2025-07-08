@@ -1,4 +1,3 @@
-context("Base transformation functions")
 library(testthat)
 library(Rydra)
 
@@ -55,8 +54,6 @@ test_that("exp_transform computes exponential with specified base", {
 })
 
 # truncate_variable tests
-context("truncate_variable function")
-
 test_that("truncate_variable truncates at lower bound", {
   expect_equal(truncate_variable(5, 10, 20), 10)
   expect_equal(truncate_variable(-5, 0, 10), 0)
