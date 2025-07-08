@@ -1,0 +1,62 @@
+model_name: "complex_model"
+
+centering:
+  age: 40
+  bmi: 25
+  gender: 0
+
+complex_model:
+  intercepts:
+    baseline: 2.0
+    gender_male: 0.5
+    gender_female: -0.3
+
+  coefficients:
+    age_centered: 0.1
+    age_squared_centered: -0.01
+    bmi_centered: 0.2
+    gender_dependent: 1.5
+    # Intentional error: coefficient with no corresponding transformation
+    missing_var: 0.99
+
+  transformations:
+    - name: "age_centered"
+      formula: "center_variable(age, centering.age)"
+    - name: "age_squared_centered"
+      formula: "square_variable(age_centered)"
+    - name: "bmi_centered"
+      formula: "center_variable(bmi, centering.bmi)"
+    - name: "gender_dependent"
+      formula: |
+        if (age > 40) {
+          if (gender == 1) intercepts.gender_male else intercepts.gender_female
+        } else {
+          age_squared_centered + bmi_centered
+        }
+
+  conditions:
+    - name: "high_bmi_bonus"
+      condition: "bmi > 30"
+      coefficient: "coefficients.bmi_centered"
+    - name: "age_gender_special"
+      condition: "age > 50 & gender == 1"
+      coefficient: "intercepts.gender_male"
+    # Intentional error: missing 'coefficient' key
+    - name: "bad_condition"
+      condition: "age < 0"
+
+  factors:
+    - name: "smoker"
+      levels:
+        - value: 0
+          coefficient: "intercepts.baseline"
+        - value: 1
+          coefficient: "coefficients.age_centered"
+    - name: "gender"
+      levels:
+        - value: 0
+          coefficient: "intercepts.gender_female"
+        - value: 1
+          coefficient: "intercepts.gender_male"
+
+  output_transformation: "result * 10" 

@@ -1,0 +1,46 @@
+model_name: "simplified_model"
+
+centering:
+  age: 30
+  income: 50000
+
+main_model:
+  intercepts:
+    baseline: 1.25
+
+  coefficients:
+    # Continuous variable coefficients
+    age_centered: 0.05
+    age_squared_centered: -0.02
+    income_log: 0.15
+
+    # Coefficients for categorical variables
+    student_modifier: -0.50
+    employment_unemployed: -0.25
+    employment_self_employed: 0.10
+
+  transformations:
+    - name: "age_centered"
+      formula: "center_variable(age, centering.age)"
+    - name: "age_squared_centered"
+      formula: "square_variable(age_centered)"
+    - name: "income_log"
+      formula: "log_transform(income)"
+
+  factors:
+    - name: "student"
+      levels:
+        - value: 0
+          coefficient: "coefficients.baseline" # Assuming 0 is the baseline, so no additional coefficient
+        - value: 1
+          coefficient: "coefficients.student_modifier"
+    - name: "employment_status"
+      levels:
+        - value: "Employed"
+          coefficient: "coefficients.baseline" # Baseline for employment status
+        - value: "Unemployed"
+          coefficient: "coefficients.employment_unemployed"
+        - value: "Self-employed"
+          coefficient: "coefficients.employment_self_employed"
+
+  output_transformation: "result * 100"

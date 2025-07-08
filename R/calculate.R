@@ -16,9 +16,10 @@
 #'   # Assuming config.yaml and input_data are defined
 #'   # result <- rydra_calculate("path/to/config.yaml", input_data)
 #' }
-rydra_calculate <- function(config_path, data, model_name = "plgf_model") {
-  # 1. Load configuration
+rydra_calculate <- function(config_path, data, model_name = "plgf_model", transformations = NULL) {
+  # 1. Load and validate configuration
   config <- load_config(config_path)
+  validate_config(config, model_name, data)
   if (is.null(config[[model_name]])) {
     stop(paste0("Model configuration '", model_name, "' not found in the YAML file."))
   }
@@ -44,11 +45,11 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model") {
   # 2. Apply transformations
   # The apply_transformations function expects data that can be column-assigned.
   # Let's pass a copy that can be modified.
-  transformed_data_df <- apply_transformations(config = config, data = as.data.frame(data_list))
+  transformed_data_df <- apply_transformations(config = config, data = as.data.frame(data_list), transformations = transformations)
   transformed_data_list <- as.list(transformed_data_df)
 
-  # 3. Calculate sum of coefficients from met conditions
-  conditional_coeffs_sum <- apply_conditions(config = config, data = transformed_data_list)
+  # 3. Calculate sum of coefficients from factors
+  factor_coeffs_sum <- apply_factors(config = config, data = transformed_data_list, model_name = model_name)
 
   # 4. Calculate the "base" model prediction
   # Sum of: intercepts.baseline + sum(coefficients * data_values)
@@ -168,7 +169,7 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model") {
   }
 
   # 5. Add conditional coefficients sum
-  total_score <- base_score + conditional_coeffs_sum
+  total_score <- base_score + factor_coeffs_sum
 
   # 6. Apply output transformation
   final_result <- total_score

@@ -7,7 +7,7 @@
 #' @param data A data frame or list containing the input data.
 #' @return A data frame or list with the transformed variables added.
 #' @keywords internal
-apply_transformations <- function(config, data) {
+apply_transformations <- function(config, data, transformations = NULL) {
   if (!is.list(data) && !is.data.frame(data)) {
     stop("Input 'data' must be a list or a data frame.")
   }
@@ -29,7 +29,14 @@ apply_transformations <- function(config, data) {
   }
 
   # Create an environment for evaluation that includes config$centering and data
-  eval_env <- new.env(parent = globalenv())
+  eval_env <- new.env(parent = emptyenv())
+
+  # Add the transformation functions to the environment
+  if (!is.null(transformations)) {
+    for (name in names(transformations)) {
+      assign(name, transformations[[name]], envir = eval_env)
+    }
+  }
 
   # Add centering values to the environment
   if (!is.null(config$centering)) {
