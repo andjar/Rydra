@@ -1,10 +1,17 @@
 Package: Rydra
-Title: What the Package Does (One Line, Title Case)
+Title: A Hydra-inspired configuration management tool for R
 Version: 0.0.0.9000
 Authors@R: 
     person("Anders Hagen", "Jarmund", , "anders.h.jarmund@ntnu.no", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Description: Provides a simple way to manage configurations for calculations, inspired by Hydra.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+LazyData: true
+RoxygenNote: 7.2.3
+Imports:
+    yaml,
+    rlang
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
