@@ -1,0 +1,14 @@
+model_name: "output_transform_test_model"
+
+centering: {} # Not needed for these tests
+
+output_transform_test_model:
+  intercepts:
+    baseline: 10 # This will be our initial 'result'
+  coefficients: {} # No direct coefficients for simplicity
+  transformations: [] # No transformations for simplicity
+  factors: [] # No factors for simplicity
+  conditions: [] # No conditions for simplicity
+
+  # We will vary output_transformation in tests by loading and modifying this config
+  output_transformation: "result" # Default to just returning the result

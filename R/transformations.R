@@ -1,64 +1,76 @@
-#' Apply transformations to data based on config
+#' Apply transformations to data based on model and global configurations
 #'
-#' This function applies a series of transformations to the input data
-#' as defined in the configuration file.
+#' This function applies a series of transformations to the input data as
+#' defined in a specific model's configuration block within a larger YAML structure.
 #'
-#' @param config A list representing the parsed YAML configuration.
+#' @param model_yaml_config The specific configuration block for the current model
+#'        (e.g., `config[[model_name]]`), which should contain a `transformations` list.
 #' @param data A data frame or list containing the input data.
-#' @return A data frame or list with the transformed variables added.
+#' @param transformation_R_functions A named list of R functions available for transformations
+#'        (e.g., base functions, user-defined functions).
+#' @param full_config The full top-level configuration list, used to access
+#'        global elements like `centering`.
+#' @return A data frame with the transformed variables added.
 #' @keywords internal
-apply_transformations <- function(config, data, transformations = NULL) {
+apply_transformations <- function(model_yaml_config, data, transformation_R_functions, full_config) {
   if (!is.list(data) && !is.data.frame(data)) {
     stop("Input 'data' must be a list or a data frame.")
   }
-
-  # Ensure data is a data.frame for easier column assignment
   if (is.list(data) && !is.data.frame(data)) {
     data <- as.data.frame(data)
   }
 
-  model_config <- config$plgf_model # Or whichever model is specified/relevant
-  if (is.null(model_config)) {
-    stop("Model configuration (e.g., 'plgf_model') not found in the config.")
-  }
-
-  transformations <- model_config$transformations
-  if (is.null(transformations) || length(transformations) == 0) {
-    # No transformations to apply
+  if (is.null(model_yaml_config)) {
+    warning("Model YAML configuration section is NULL. No transformations will be applied.")
     return(data)
   }
 
-  # Create an environment for evaluation that includes config$centering and data
+  # These are the transformation rules defined in the YAML for the current model
+  yaml_defined_transformations <- model_yaml_config$transformations
+  if (is.null(yaml_defined_transformations) || length(yaml_defined_transformations) == 0) {
+    return(data) # No transformations defined in YAML for this model
+  }
+
   eval_env <- new.env(parent = emptyenv())
 
-  # Add the transformation functions to the environment
-  if (!is.null(transformations)) {
-    for (name in names(transformations)) {
-      assign(name, transformations[[name]], envir = eval_env)
+  # Add the active transformation R functions (e.g., base, custom) to the environment
+  if (!is.null(transformation_R_functions) && length(transformation_R_functions) > 0) {
+    for (name in names(transformation_R_functions)) {
+      if (is.function(transformation_R_functions[[name]])) {
+        assign(name, transformation_R_functions[[name]], envir = eval_env)
+      } else {
+        warning(paste0("Item '", name, "' in provided transformation_R_functions list is not a function. Skipping."))
+      }
     }
   }
 
-  # Add centering values to the environment
-  if (!is.null(config$centering)) {
-    for (name in names(config$centering)) {
-      assign(name, config$centering[[name]], envir = eval_env)
+  # Add global centering values from the full_config to the environment
+  if (!is.null(full_config$centering)) {
+    for (name in names(full_config$centering)) {
+      assign(name, full_config$centering[[name]], envir = eval_env)
     }
+    assign("centering", full_config$centering, envir = eval_env) # Allow access to centering.VAR
   }
 
-  # Add data columns to the environment
-  # This allows formulas to refer to columns directly
+  # Add elements from the current model's configuration (e.g., intercepts, coefficients)
+  # to the eval_env, so they can be referenced in transformation formulas.
+  if (!is.null(model_yaml_config$intercepts)) {
+    assign("intercepts", model_yaml_config$intercepts, envir = eval_env)
+  }
+  if (!is.null(model_yaml_config$coefficients)) {
+    assign("coefficients", model_yaml_config$coefficients, envir = eval_env)
+  }
+  # One could selectively add other named lists from model_yaml_config if needed.
+
+  # Add data columns to the environment for direct access in formulas
   for (col_name in names(data)) {
     assign(col_name, data[[col_name]], envir = eval_env)
   }
 
-  # Add config itself to the environment, so formulas can refer to config elements
-  # e.g. centering.ga_days
-  assign("centering", config$centering, envir = eval_env)
-  # Potentially add other parts of config if needed by formulas
-
-  for (trans in transformations) {
+  # Iterate through YAML-defined transformations for the current model
+  for (trans in yaml_defined_transformations) {
     if (is.null(trans$name) || is.null(trans$formula)) {
-      warning("Skipping transformation due to missing 'name' or 'formula'.")
+      warning("Skipping transformation due to missing 'name' or 'formula' in YAML.")
       next
     }
 

@@ -1,0 +1,18 @@
+model_name: "transform_test_model"
+
+centering:
+  val_a: 10
+
+transform_test_model:
+  intercepts:
+    baseline: 0
+  coefficients:
+    val_a_centered: 1
+    val_b_logged: 2
+  transformations:
+    - name: "val_a_centered"
+      formula: "center_variable(val_a, centering.val_a)"
+    - name: "val_b_logged"
+      formula: "log_transform(val_b)" # Uses base log_transform
+  factors: []
+  output_transformation: "result"
