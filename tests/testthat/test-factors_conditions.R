@@ -73,7 +73,7 @@ test_that("apply_conditions applies correct coefficients for met conditions", {
   )
   data <- list(x = 15, y = 0)
   # Both conditions met: 5 + (-2) = 3
-  expect_equal(apply_conditions(config, data, model_name = "test_model"), 3)
+  expect_equal(apply_conditions(model_config = config$test_model, data = data), 3)
 })
 
 test_that("apply_conditions returns 0 if no conditions met", {
@@ -88,7 +88,7 @@ test_that("apply_conditions returns 0 if no conditions met", {
     )
   )
   data <- list(x = 5, y = 1)
-  expect_equal(apply_conditions(config, data, model_name = "test_model"), 0)
+  expect_equal(apply_conditions(model_config = config$test_model, data = data), 0)
 })
 
 test_that("apply_conditions handles malformed condition (missing coefficient)", {
@@ -100,12 +100,42 @@ test_that("apply_conditions handles malformed condition (missing coefficient)", 
     )
   )
   data <- list(x = 1)
-  expect_error(apply_conditions(config, data, model_name = "test_model"),
-               "is invalid. It must be a list with 'name', 'condition', and 'coefficient' keys")
+  # The error is a warning in the new function, and it returns sum of valid conditions.
+  # For a single malformed condition, the sum should be 0, and a warning issued.
+  expect_warning(
+    result <- apply_conditions(model_config = config$test_model, data = data),
+    "Condition item #1 in YAML is invalid."
+  )
+  expect_equal(result, 0) # No valid coefficient should be added
 })
 
 test_that("apply_conditions returns 0 if no conditions defined", {
-  config <- list(test_model = list(conditions = NULL))
+  config <- list(test_model = list(conditions = NULL)) # model_config directly
   data <- list(x = 1)
-  expect_equal(apply_conditions(config, data, model_name = "test_model"), 0)
+  expect_equal(apply_conditions(model_config = config$test_model, data = data), 0)
+})
+
+# Test that apply_conditions can access model_config elements (e.g. intercepts) in condition formula
+test_that("apply_conditions allows conditions to reference model_config elements", {
+  config_complex_condition <- list(
+    test_model_cond = list(
+      intercepts = list(age_threshold = 40, bonus_coeff = 5),
+      conditions = list(
+        list(name = "age_bonus",
+             condition = "age > intercepts.age_threshold", # References model_config$intercepts
+             coefficient = "intercepts.bonus_coeff")
+      )
+    )
+  )
+  data_above_threshold <- list(age = 45)
+  data_below_threshold <- list(age = 35)
+
+  expect_equal(
+    apply_conditions(model_config = config_complex_condition$test_model_cond, data = data_above_threshold),
+    5 # age (45) > intercepts.age_threshold (40) is true, apply intercepts.bonus_coeff (5)
+  )
+  expect_equal(
+    apply_conditions(model_config = config_complex_condition$test_model_cond, data = data_below_threshold),
+    0 # age (35) > intercepts.age_threshold (40) is false
+  )
 }) 

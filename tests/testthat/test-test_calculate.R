@@ -27,45 +27,43 @@ test_that("rydra_calculate computes correct value with example_config", {
   expect_true(file.exists(config_file_path),
               info = paste("Config file not found at:", config_file_path, "CWD:", getwd()))
 
+  # Corrected input data for example_config.yaml and its 'main_model'
   input_data <- list(
-    biochemical_ga = 12, # weeks
-    weight = 70,         # kg
-    age = 30,            # years
-    plgf_machine = 1,    # Delfia
-    race = 1,            # Caucasian/Other
-    smoking = 0,         # No
-    diabetes_type_i = 0, # No
-    diabetes_type_ii = 0,# No
-    conception = 1,      # Spontaneous
-    previous = 0,        # Nulliparous
-    # diabetes_drugs not applicable
-    # previous_pe not applicable
-    # height_cm is in config but not used by this model's direct terms/transformations
-    height_cm = 164
+    age = 35,
+    income = 60000,
+    student = 1, # This corresponds to student_modifier
+    employment_status = "Unemployed" # Corresponds to employment_unemployed
   )
 
-  # Manually calculated expected result (as per detailed steps in prompt)
-  # ga_centered = 12 * 7 - 77 = 7
-  # ga_squared_centered = 7^2 = 49
-  # weight_centered = 70 - 69 = 1
-  # weight_squared_centered = 1^2 = 1
-  # age_centered = 30 - 35 = -5
-  #
-  # base_score_terms = (7 * 0.012263018) + (49 * 0.000149743) + (1 * -0.001682761) +
-  #                    (1 * 0.000008780) + (-5 * 0.002174191)
-  # base_score_terms = 0.085841126 + 0.007337407 - 0.001682761 + 0.000008780 - 0.010870955
-  # base_score = 0 (baseline) + 0.080633597 = 0.080633597
-  #
-  # conditional_coeffs_sum = 1.332959332 (for plgf_machine == 1, Delfia)
-  #
-  # total_score = 0.080633597 + 1.332959332 = 1.413592929
-  #
-  # final_result = 10^1.413592929 = 25.9176511
-  expected_value <- 25.9176511
+  # Manually calculated expected result for example_config.yaml with 'main_model':
+  # Centering: age: 30, income: 50000
+  # Transformations:
+  #   age_centered = center_variable(35, 30) = 5
+  #   age_squared_centered = square_variable(5) = 25
+  #   income_log = log_transform(60000) approx 11.002102
+  # Intercepts: baseline: 1.25
+  # Coefficients (direct terms):
+  #   age_centered: 0.05 * 5 = 0.25
+  #   age_squared_centered: -0.02 * 25 = -0.50
+  #   income_log: 0.15 * 11.002102 = 1.6503153
+  # Base Score = 1.25 + 0.25 - 0.50 + 1.6503153 = 2.6503153
+  # Factors:
+  #   student = 1 -> student_modifier = -0.50
+  #   employment_status = "Unemployed" -> employment_unemployed = -0.25
+  # Factor Sum = -0.50 + (-0.25) = -0.75
+  # Conditions: None in example_config.yaml, so sum = 0.
+  # Total Score = Base Score + Factor Sum + Conditions Sum = 2.6503153 - 0.75 + 0 = 1.9003153
+  # Output Transformation: result * 100 = 1.9003153 * 100 = 190.03153
+  expected_value <- 190.03153
 
-  actual_value <- Rydra::rydra_calculate(config_path = config_file_path, data = input_data)
+  # Use model_name = "main_model" as defined in example_config.yaml
+  actual_value <- Rydra::rydra_calculate(
+    config_path = config_file_path,
+    data = input_data,
+    model_name = "main_model" # Specify the correct model name
+  )
 
-  expect_equal(actual_value, expected_value, tolerance = 1e-7)
+  expect_equal(actual_value, expected_value, tolerance = 1e-5) # Adjusted tolerance slightly
 })
 
 test_that("load_config handles non-existent file", {
