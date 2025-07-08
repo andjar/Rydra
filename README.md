@@ -140,24 +140,6 @@ main_model:
 
 You can also use your own custom transformation functions. As explained in the "Getting Started" section, you can pass a named list of your functions via the `transformations` argument to `rydra_calculate`. If you do so, remember that this list *replaces* the default set of base transformations, so include any base functions you still need (e.g., `list(my_func = ..., log_transform = Rydra::log_transform)`).
 
-Here is an example of how to use a custom transformation function:
-
-```r
-# Define a custom transformation function
-my_custom_transformation <- function(x) {
-  x * 2
-}
-
-# Add the custom transformation function to the transformations list
-transformations$my_custom_transformation <- my_custom_transformation
-
-# Use the custom transformation function in the YAML configuration file
-# transformations:
-#   - name: "my_transformed_variable"
-#     formula: "my_custom_transformation(my_variable)"
-
-```
-
 ### Factors
 
 The `factors` section of the YAML configuration file allows you to define and manage categorical variables. Each factor has a `name` and a list of `levels`. Each `level` has a `value` (the actual value of the factor in your data) and a `coefficient` (the path to the coefficient in the `coefficients` or `intercepts` section that should be applied when this level is present). You should explicitly define all levels, including the baseline, to ensure proper validation and clarity.
@@ -207,7 +189,117 @@ If a condition's expression is TRUE, the numeric value found at the specified `c
 
 ### Output Transformation
 
-The `output_transformation` section of the YAML configuration file allows you to apply a final transformation to the calculated score. This can be any valid R expression.
+The `output_transformation` section of the YAML configuration file allows you to apply a final transformation to the calculated score. This should be a simple R expression that primarily operates on a variable named `result`, which holds the total aggregated score before this final step. It's intended for final scaling, unit conversions, or applying a cap/floor.
+
+For example:
+```yaml
+output_transformation: "result * 100" # Scales the result
+```
+Or:
+```yaml
+output_transformation: "pmin(result, 10)" # Caps the result at 10
+```
+While complex R expressions are possible, simpler, more direct transformations are recommended for clarity and maintainability.
+
+### Example: Score Calculation Walkthrough
+
+Let's walk through how a score is calculated with a medium-complex example. We'll use a hypothetical model configuration similar to `main_model` found in `inst/extdata/example_config.yaml`.
+
+**Sample Input Data:**
+
+*   `age`: 40
+*   `income`: 70000
+*   `student`: 1 (true/active student)
+*   `employment_status`: "Unemployed"
+
+**Relevant YAML Configuration Snippets:**
+
+```yaml
+centering:
+  age: 30
+  income: 50000
+
+# model_name: example_calculation_model (hypothetical)
+intercepts:
+  baseline: 1.25
+
+coefficients:
+  age_centered: 0.05
+  age_squared_centered: -0.02
+  income_log: 0.15
+  student_modifier: -0.50             # Used by factors
+  employment_unemployed: -0.25      # Used by factors
+  # (other coefficients for different factor levels or conditions might exist)
+
+transformations:
+  - name: "age_centered"
+    formula: "center_variable(age, centering.age)"
+  - name: "age_squared_centered"
+    formula: "square_variable(age_centered)"
+  - name: "income_log"
+    formula: "log_transform(income)"
+
+factors:
+  - name: "student"
+    levels:
+      - value: 0
+        coefficient: "coefficients.baseline_student_effect" # Hypothetical baseline effect
+      - value: 1
+        coefficient: "coefficients.student_modifier"
+  - name: "employment_status"
+    levels:
+      - value: "Employed"
+        coefficient: "coefficients.baseline_employment_effect" # Hypothetical
+      - value: "Unemployed"
+        coefficient: "coefficients.employment_unemployed"
+      # (other levels)
+
+# conditions: (Assume no conditions for this specific example for simplicity, or they evaluate to 0)
+#   - name: "some_condition"
+#     condition: "age_centered > 15"
+#     coefficient: "coefficients.conditional_add_on"
+
+output_transformation: "result * 100"
+```
+
+**Calculation Steps:**
+
+1.  **Apply Transformations:**
+    *   `age_centered`: `center_variable(40, centering.age=30)` = `40 - 30` = `10`
+    *   `age_squared_centered`: `square_variable(age_centered=10)` = `10^2` = `100`
+    *   `income_log`: `log_transform(income=70000)` (natural log) ≈ `11.15625`
+    *   The `transformed_data` available for subsequent steps will include these values alongside the original data.
+
+2.  **Calculate Base Score:**
+    This score includes the baseline intercept plus the sum of (direct coefficient * transformed variable value).
+    *   `intercept`: `1.25` (from `intercepts.baseline`)
+    *   Direct coefficient contributions:
+        *   `age_centered`: `0.05 * 10` = `0.5`
+        *   `age_squared_centered`: `-0.02 * 100` = `-2.0`
+        *   `income_log`: `0.15 * 11.15625` = `1.6734375`
+    *   `base_score` = `1.25 + 0.5 - 2.0 + 1.6734375` = `1.4234375`
+
+3.  **Calculate Factor Coefficients Sum (`factor_coeffs_sum`):**
+    This sum comes from looking up the coefficients associated with the active levels of categorical variables.
+    *   **Factor "student"**: Input `student` is `1`.
+        *   The YAML maps level `1` to `coefficients.student_modifier`, which is `-0.50`.
+    *   **Factor "employment_status"**: Input `employment_status` is `"Unemployed"`.
+        *   The YAML maps this level to `coefficients.employment_unemployed`, which is `-0.25`.
+    *   `factor_coeffs_sum` = `-0.50 + (-0.25)` = `-0.75`
+
+4.  **Calculate Conditional Coefficients Sum (`conditional_coeffs_sum`):**
+    This sum comes from any `conditions` that evaluate to true. For this example, we assume no conditions are met or defined.
+    *   `conditional_coeffs_sum` = `0`
+
+5.  **Calculate Total Score (before output transformation):**
+    `total_score` = `base_score + factor_coeffs_sum + conditional_coeffs_sum`
+    `total_score` = `1.4234375 + (-0.75) + 0` = `0.6734375`
+
+6.  **Apply Output Transformation:**
+    The `output_transformation` is `result * 100`.
+    *   `final_result` = `total_score * 100` = `0.6734375 * 100` = `67.34375`
+
+This `final_result` of `67.34375` is what `rydra_calculate()` would return for this input data and configuration.
 
 ## Logging Calculations
 
