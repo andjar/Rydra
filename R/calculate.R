@@ -17,6 +17,8 @@
 #'        unless you explicitly add them. Provide `list()` to exclude all defaults
 #'        and use only what's in the YAML if those functions are globally available.
 #' @export
+#' @importFrom jsonlite write_json
+#' @importFrom uuid UUIDgenerate
 #' @examples
 #' \dontrun{
 #'   # Assuming config.yaml and input_data are defined
@@ -45,7 +47,14 @@
 rydra_calculate <- function(config_path, data, model_name = "plgf_model", transformations = .default_rydra_transformations) {
   # 1. Load and validate configuration
   config <- load_config(config_path)
-  validate_config(config, model_name, data)
+  validate_config(config, model_name, data) # Assuming data is the original input here for validation
+
+  # Get logging configuration
+  log_settings <- get_logging_config(config)
+
+  # Capture original data for logging before potential modification
+  original_data_for_log <- data
+
   if (is.null(config[[model_name]])) {
     stop(paste0("Model configuration '", model_name, "' not found in the YAML file."))
   }
@@ -220,6 +229,62 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
       final_result <- eval(parse(text = model_config$output_transformation), envir = eval_env_output)
     }, error = function(e) {
       stop(paste0("Error evaluating output transformation '", model_config$output_transformation, "': ", e$message))
+    })
+  }
+
+  # 7. Log calculation details if enabled
+  if (log_settings$enabled) {
+    tryCatch({
+      if (!dir.exists(log_settings$path)) {
+        dir.create(log_settings$path, recursive = TRUE, showWarnings = FALSE)
+      }
+
+      # Sanitize input data for logging: data frames can be complex for JSON.
+      # Convert to list if it's a data.frame. Ensure it's serializable.
+      input_data_log <- original_data_for_log # Use the captured original data
+      if (is.data.frame(input_data_log)) {
+        input_data_log <- as.list(input_data_log)
+      }
+      # Ensure all elements in the list are simple enough for JSON
+      # This is a basic attempt; complex objects might need more handling.
+      input_data_log <- lapply(input_data_log, function(x) {
+        if (is.factor(x)) as.character(x) else x
+      })
+
+
+      log_data <- list(
+        timestamp = format(Sys.time(), "%Y-%m-%dT%H:%M:%OS6Z"),
+        invocation_params = list(
+          config_path = config_path,
+          model_name = model_name,
+          # Use the original_data_for_log that was captured before modifications
+          data = input_data_log
+        ),
+        model_config_used = model_config, # This is config[[model_name]]
+        intermediate_values = list(
+          # data_list is the input data after initial processing (e.g. first row taken, to list)
+          # transformed_data_list is after transformations
+          input_data_processed_for_calc = data_list,
+          transformed_data = transformed_data_list,
+          factor_coeffs_sum = factor_coeffs_sum,
+          base_score = base_score,
+          conditional_coeffs_sum = conditional_coeffs_sum,
+          total_score_pre_output_transform = total_score
+        ),
+        final_result = final_result
+      )
+
+      # Generate a sortable, unique filename
+      # Using timestamp and a v4 UUID for uniqueness.
+      # For sortability, timestamp prefix is key.
+      unique_id_part <- uuid::UUIDgenerate(output = "string")
+      filename <- paste0(format(Sys.time(), "%Y%m%d%H%M%OS6"), "_", unique_id_part, ".json")
+      filepath <- file.path(log_settings$path, filename)
+
+      jsonlite::write_json(log_data, filepath, auto_unbox = TRUE, pretty = TRUE)
+
+    }, error = function(e) {
+      warning(paste0("Rydra logging failed: ", e$message))
     })
   }
 
