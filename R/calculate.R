@@ -38,12 +38,12 @@
 # These functions must be exported from the package or otherwise available.
 # Assuming they are exported (which they are, from R/basic_transformations.R)
 .default_rydra_transformations <- list(
-  center_variable = Rydra::center_variable,
-  square_variable = Rydra::square_variable,
-  log_transform = Rydra::log_transform,
-  exp_transform = Rydra::exp_transform,
-  multiply_by = Rydra::multiply_by,
-  add_value = Rydra::add_value
+  center_variable = center_variable,
+  square_variable = square_variable,
+  log_transform = log_transform,
+  exp_transform = exp_transform,
+  multiply_by = multiply_by,
+  add_value = add_value
 )
 
 rydra_calculate <- function(config_path, data, model_name = "plgf_model", transformations = .default_rydra_transformations) {

@@ -5,11 +5,10 @@
 #' provides functions to use these configurations to perform calculations on
 #' input data.
 #'
-#' @docType package
-#' @name Rydra-package
+#' @keywords internal
 #' @aliases Rydra
-#'
-#' @section Key Functions:
+#' @details
+#' Key Functions:
 #' \itemize{
 #'   \item \code{\link{load_config}}: Loads a YAML configuration file.
 #'   \item \code{\link{hydra_calculate}}: Performs calculations based on a loaded
@@ -20,7 +19,6 @@
 #' \dontrun{
 #' # 1. Create a YAML configuration file (e.g., "my_model_config.yaml")
 #' #    similar to the structure shown in the package documentation or vignettes.
-#' #    An example file is available in the package:
 #'    config_path <- system.file("extdata", "example_config.yaml", package = "Rydra")
 #'    if (config_path == "") {
 #'      # Fallback for when not installed, e.g. during dev
@@ -62,4 +60,4 @@
 #' }
 #'
 #' }
-NULL
+"_PACKAGE"
