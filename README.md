@@ -126,7 +126,7 @@ main_model:
         - value: "Self-employed"
           coefficient: "coefficients.employment_self_employed"
 
-  output_transformation: "result * 100"
+  output_transformation: "truncate_variable(result, 0, 100)"
 ```
 
 ### Transformations
@@ -200,6 +200,11 @@ Available built-in transformation functions (which can be used if they are part 
 
 **Examples in YAML:**
 
+To truncate the result to a minimum of 0 and a maximum of 100:
+```yaml
+output_transformation: "truncate_variable(result, 0, 100)"
+```
+
 To scale the result by 100:
 ```yaml
 output_transformation: "multiply_by(result, 100)"
@@ -209,14 +214,6 @@ To add 5 to the result:
 ```yaml
 output_transformation: "add_value(result, 5)"
 ```
-
-To cap the result at 10, assuming `pmin` was made available in the `transformations` list (e.g., `transformations = list(pmin = base::pmin, ...)`):
-```yaml
-# This example assumes pmin is available in the transformations list
-# output_transformation: "pmin(result, 10)"
-```
-If you need `pmin` and it's not in your default transformation list, you would have to add it when calling `rydra_calculate`.
-A more Rydra-idiomatic way if `pmin` is not directly available would be to define a specific transformation like `cap_value(value, cap)` and use that.
 
 The `log_transform` function (available by default) can also be used:
 ```yaml
@@ -286,7 +283,7 @@ factors:
 #     condition: "age_centered > 15"
 #     coefficient: "coefficients.conditional_add_on"
 
-output_transformation: "result * 100"
+output_transformation: "truncate_variable(result, 0, 100)"
 ```
 
 **Calculation Steps:**
@@ -323,10 +320,10 @@ output_transformation: "result * 100"
     `total_score` = `1.4234375 + (-0.75) + 0` = `0.6734375`
 
 6.  **Apply Output Transformation:**
-    The `output_transformation` is `result * 100`.
-    *   `final_result` = `total_score * 100` = `0.6734375 * 100` = `67.34375`
+    The `output_transformation` is `truncate_variable(result, 0, 100)`.
+    *   `final_result` = `truncate_variable(0.6734375, 0, 100)` = `0.6734375` (since it is within the range)
 
-This `final_result` of `67.34375` is what `rydra_calculate()` would return for this input data and configuration.
+This `final_result` of `0.6734375` is what `rydra_calculate()` would return for this input data and configuration.
 
 ## Logging Calculations
 
