@@ -45,6 +45,30 @@ exp_transform <- function(x, base = exp(1)) {
   base ^ x
 }
 
+#' Multiply a variable by a multiplier
+#'
+#' Multiplies a variable by a specified multiplier.
+#'
+#' @param value The variable to multiply.
+#' @param multiplier The multiplier.
+#' @return The variable multiplied by the multiplier.
+#' @export
+multiply_by <- function(value, multiplier) {
+  value * multiplier
+}
+
+#' Add a term to a variable
+#'
+#' Adds a specified term to a variable.
+#'
+#' @param value The variable to which the term is added.
+#' @param term The term to add.
+#' @return The variable with the term added.
+#' @export
+add_value <- function(value, term) {
+  value + term
+}
+
 #' Truncate a variable
 #'
 #' Truncates a variable to a specified minimum and maximum range.
