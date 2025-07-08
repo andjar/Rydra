@@ -7,15 +7,15 @@
 get_logging_config(config)
 }
 \arguments{
-\item{config}{The main configuration list (loaded from YAML).}
+\item{config}{The main configuration list, typically loaded from a YAML file via \code{load_config()}.}
 }
 \value{
 A list with logging configuration:
 \itemize{
-\item \code{enabled}: Logical, TRUE if logging is enabled, FALSE otherwise.
-\item \code{path}: Character, the directory path for storing logs.
-Defaults to "rydra_logs" if enabled but no path is specified.
-Is NULL if logging is disabled.
+  \item \code{enabled}: Logical, TRUE if logging is enabled, FALSE otherwise.
+  \item \code{path}: Character, the directory path for storing logs.
+                        Defaults to "rydra_logs" if enabled but no path is specified.
+                        Is NULL if logging is disabled.
 }
 }
 \description{
@@ -24,10 +24,35 @@ Provides sensible defaults if settings are not specified.
 }
 \examples{
 \dontrun{
-  main_config <- load_config("path/to/config.yaml")
-  log_settings <- get_logging_config(main_config)
-  if (log_settings$enabled) {
-    print(paste("Logging to:", log_settings$path))
+# Example using a manually created config list
+dummy_config_no_logging <- list(model_name = "test")
+settings1 <- get_logging_config(dummy_config_no_logging)
+print(paste("Logging enabled:", settings1$enabled)) # Should be FALSE
+
+dummy_config_with_logging <- list(
+  model_name = "test",
+  logging = list(enabled = TRUE, path = "my_app_logs")
+)
+settings2 <- get_logging_config(dummy_config_with_logging)
+if (settings2$enabled) {
+  print(paste("Logging enabled, path:", settings2$path))
+}
+
+# Example with package's example_config.yaml
+config_path <- system.file("extdata", "example_config.yaml", package = "Rydra")
+if (config_path == "" && file.exists("inst/extdata/example_config.yaml")) {
+  config_path <- "inst/extdata/example_config.yaml" # Fallback for dev
+}
+
+if (file.exists(config_path)) {
+  actual_config <- load_config(config_path)
+  log_settings_from_file <- get_logging_config(actual_config)
+  print(paste("Logging from file enabled:", log_settings_from_file$enabled))
+  if (log_settings_from_file$enabled) {
+    print(paste("Logging path from file:", log_settings_from_file$path))
   }
+} else {
+  print("Could not find example_config.yaml for get_logging_config example.")
+}
 }
 }

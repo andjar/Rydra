@@ -7,31 +7,62 @@
 #' @param config_path Path to the YAML configuration file.
 #' @param data A list or a single-row data frame representing the input data
 #'        for which the calculation is to be performed.
-#' @param model_name The name of the model configuration block in the YAML
-#'        (e.g., "plgf_model"). Defaults to "plgf_model".
+#' @param model_name The name of the model configuration block in the YAML. Defaults to "plgf_model".
 #' @return The final calculated result after applying all steps.
 #' @param transformations A named list of custom transformation functions.
-#'        Defaults to a list of basic transformations: `center_variable`,
-#'        `square_variable`, `log_transform`, `exp_transform`. If you provide
-#'        your own list, the default base transformations will not be included
-#'        unless you explicitly add them. Provide `list()` to exclude all defaults
-#'        and use only what's in the YAML if those functions are globally available.
+#'        Defaults to internal list including `center_variable`, `square_variable`,
+#'        `log_transform`, `exp_transform`, `multiply_by`, and `add_value`.
+#'        Provide your own list to override defaults.
+#'        Provide `list()` to use only functions globally available or defined in YAML.
 #' @export
 #' @importFrom jsonlite write_json
 #' @importFrom uuid UUIDgenerate
 #' @examples
 #' \dontrun{
-#'   # Assuming config.yaml and input_data are defined
-#'   # result <- rydra_calculate("path/to/config.yaml", input_data)
+#' # Basic example using the package's built-in example configuration
+#' config_path <- system.file("extdata", "example_config.yaml", package = "Rydra")
 #'
-#'   # To use only custom transformations (and exclude base ones):
-#'   # my_custom_funcs <- list(my_func = function(x) x * 10)
-#'   # result <- rydra_calculate("path/to/config.yaml", input_data,
-#'   #                           transformations = my_custom_funcs)
+#' # Fallback for development when package is not installed
+#' if (config_path == "" && file.exists("inst/extdata/example_config.yaml")) {
+#'   config_path <- "inst/extdata/example_config.yaml"
+#' }
 #'
-#'   # To exclude even base transformations (if functions in YAML are globally defined):
-#'   # result <- rydra_calculate("path/to/config.yaml", input_data,
-#'   #                           transformations = list())
+#' if (file.exists(config_path)) {
+#'   input_data <- list(
+#'     biochemical_ga    = 12, # weeks
+#'     weight            = 70, # kg
+#'     age               = 30, # years
+#'     plgf_machine      = 1,  # Corresponds to 'Delfia' in example config
+#'     race              = 1,  # e.g., Caucasian/Other
+#'     smoking           = 0,  # 0 for No, 1 for Yes
+#'     diabetes_type_i   = 0,  # 0 for No, 1 for Yes
+#'     diabetes_type_ii  = 0,  # 0 for No, 1 for Yes
+#'     conception        = 1,  # e.g., 1 for Spontaneous, 3 for IVF
+#'     previous          = 0   # e.g., 0 for Nulliparous
+#'   )
+#'   result <- rydra_calculate(config_path = config_path, data = input_data)
+#'   print(paste("Calculated result:", result))
+#'
+#'   # Example with custom transformations (overriding defaults)
+#'   # This example defines a new transformation and uses only that one.
+#'   # Note: The example_config.yaml might not use 'custom_doubler'.
+#'   # This is for illustration of the 'transformations' parameter.
+#'   my_transforms <- list(custom_doubler = function(x) x * 2)
+#'   # If your config expects 'ga_centered', this example might need adjustment
+#'   # or a config that uses 'custom_doubler(some_variable)'.
+#'   # For this to run meaningfully, you'd typically align custom functions
+#'   # with what your specific YAML configuration expects.
+#'
+#'   # Example using NO base transformations, relying only on globally defined ones
+#'   # (if your YAML refers to functions like 'log' directly and they are available)
+#'   # result_no_base <- rydra_calculate(config_path = config_path,
+#'   #                                   data = input_data,
+#'   #                                   transformations = list())
+#'   # print(paste("Calculated result (no base transformations):", result_no_base))
+#'
+#' } else {
+#'   print("Could not find example_config.yaml for rydra_calculate examples.")
+#' }
 #' }
 #'
 # Define the list of base transformation functions

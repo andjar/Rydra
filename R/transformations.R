@@ -3,13 +3,14 @@
 #' This function applies a series of transformations to the input data as
 #' defined in a specific model's configuration block within a larger YAML structure.
 #'
-#' @param model_yaml_config The specific configuration block for the current model
-#'        (e.g., `config[[model_name]]`), which should contain a `transformations` list.
-#' @param data A data frame or list containing the input data.
-#' @param transformation_R_functions A named list of R functions available for transformations
-#'        (e.g., base functions, user-defined functions).
+#' @param model_yaml_config The specific model configuration list (e.g., `config[[model_name]]`)
+#'        containing transformation definitions.
+#' @param data A data frame or list containing the input data. This data will be modified
+#'        by adding new transformed columns.
+#' @param transformation_R_functions A named list of R functions available for use
+#'        in transformation formulas.
 #' @param full_config The full top-level configuration list, used to access
-#'        global elements like `centering`.
+#'        global elements like `centering` values.
 #' @return A data frame with the transformed variables added.
 #' @keywords internal
 apply_transformations <- function(model_yaml_config, data, transformation_R_functions, full_config) {

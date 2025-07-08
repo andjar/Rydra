@@ -9,11 +9,15 @@ log_transform(x, base = exp(1))
 \arguments{
 \item{x}{The variable to log-transform.}
 
-\item{base}{The base of the logarithm.}
+\item{base}{The base of the logarithm. Defaults to \code{exp(1)} (natural logarithm).}
 }
 \value{
 The log-transformed variable.
 }
 \description{
 Log-transforms a variable.
+}
+\examples{
+log_transform(100, base = 10) # Returns 2
+log_transform(exp(2)) # Returns 2 (natural log)
 }
