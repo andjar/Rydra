@@ -1,0 +1,49 @@
+model_name: "clinical_trial_selection"
+
+centering:
+  age: 50
+  creatinine: 1.0
+
+main_model:
+  intercepts:
+    baseline: 0
+
+  coefficients:
+    age_above_60: 0.1
+    creatinine_high: 0.2
+    comorbidity_score_high: 0.3
+    previous_treatment_failed: 0.4
+
+  transformations:
+    - name: "age_category"
+      formula: "ifelse(age > 60, 1, 0)"
+    - name: "creatinine_category"
+      formula: "ifelse(creatinine > 1.5, 1, 0)"
+
+  factors:
+    - name: "comorbidity_score"
+      levels:
+        - value: "low"
+          coefficient: "intercepts.baseline"
+        - value: "medium"
+          coefficient: "intercepts.baseline"
+        - value: "high"
+          coefficient: "coefficients.comorbidity_score_high"
+    - name: "previous_treatment"
+      levels:
+        - value: "naive"
+          coefficient: "intercepts.baseline"
+        - value: "failed"
+          coefficient: "coefficients.previous_treatment_failed"
+        - value: "success"
+          coefficient: "intercepts.baseline"
+
+  conditions:
+    - name: "age_above_60_cond"
+      condition: "age_category == 1"
+      coefficient: "coefficients.age_above_60"
+    - name: "creatinine_high_cond"
+      condition: "creatinine_category == 1"
+      coefficient: "coefficients.creatinine_high"
+
+  output_transformation: "pmin(result, 1.0)"
