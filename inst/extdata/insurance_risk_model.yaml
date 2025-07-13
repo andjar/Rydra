@@ -1,0 +1,36 @@
+model_name: "insurance_risk"
+
+centering:
+  age: 40
+  bmi: 25
+
+main_model:
+  intercepts:
+    baseline: 0.5
+
+  coefficients:
+    age_centered: 0.02
+    bmi_log: 0.1
+    smoker_modifier: 0.3
+    high_risk_adjustment: 0.2
+
+  transformations:
+    - name: "age_centered"
+      formula: "center_variable(age, centering.age)"
+    - name: "bmi_log"
+      formula: "log_transform(bmi)"
+
+  factors:
+    - name: "smoker"
+      levels:
+        - value: 0
+          coefficient: "intercepts.baseline"
+        - value: 1
+          coefficient: "coefficients.smoker_modifier"
+
+  conditions:
+    - name: "high_risk_age_bmi"
+      condition: "age > 50 && bmi > 30"
+      coefficient: "coefficients.high_risk_adjustment"
+
+  output_transformation: "truncate_variable(result, 0, 1)"

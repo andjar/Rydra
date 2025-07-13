@@ -2,3 +2,17 @@ url: https://andjar.github.io/Rydra/
 template:
   bootstrap: 5
 
+navbar:
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "Reference"
+      href: reference/index.html
+    - text: "Vignettes"
+      menu:
+        - text: "Simple Pricing Model"
+          href: articles/pricing-model.html
+        - text: "Insurance Risk Model"
+          href: articles/insurance-risk-model.html
+        - text: "Clinical Trial Patient Selection"
+          href: articles/clinical-trial-patient-selection.html

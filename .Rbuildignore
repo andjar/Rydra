@@ -1,5 +1,6 @@
 ^Rydra\.Rproj$
 ^\.Rproj\.user$
+^vignettes$
 ^LICENSE\.md$
 ^\.github$
 ^_pkgdown\.yml$
