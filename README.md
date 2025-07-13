@@ -140,6 +140,24 @@ main_model:
 
 You can also use your own custom transformation functions. As explained in the "Getting Started" section, you can pass a named list of your functions via the `transformations` argument to `rydra_calculate`. If you do so, remember that this list *replaces* the default set of base transformations, so include any base functions you still need (e.g., `list(my_func = ..., log_transform = Rydra::log_transform)`).
 
+#### Nested Transformations
+
+`Rydra` supports nested transformations, where a transformation can use the result of a previous one. The transformations are executed in the order they are defined in the YAML file.
+
+For example, the following is a valid sequence of transformations:
+
+```yaml
+transformations:
+  - name: "age_centered"
+    formula: "center_variable(age, centering.age)"
+  - name: "age_squared_centered"
+    formula: "square_variable(age_centered)"
+```
+
+In this example, `age_squared_centered` uses the result of `age_centered`.
+
+While this is a powerful feature, for the sake of clarity and maintainability, we recommend avoiding deeply nested transformations. When possible, breaking down complex transformations into smaller, independent steps can make the configuration easier to read and debug.
+
 ### Factors
 
 The `factors` section of the YAML configuration file allows you to define and manage categorical variables. Each factor has a `name` and a list of `levels`. Each `level` has a `value` (the actual value of the factor in your data) and a `coefficient` (the path to the coefficient in the `coefficients` or `intercepts` section that should be applied when this level is present). You should explicitly define all levels, including the baseline, to ensure proper validation and clarity.

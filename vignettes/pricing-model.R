@@ -25,8 +25,12 @@
 #'     discount_percentage: -0.1
 #'
 #'   transformations:
+#'     - name: "user_cost"
+#'       formula: "multiply_by(users, coefficients.price_per_user)"
 #'     - name: "total_price"
-#'       formula: "add_value(centering.base_price, multiply_by(users, coefficients.price_per_user))"
+#'       formula: "add_value(centering.base_price, user_cost)"
+#'     - name: "discount_factor"
+#'       formula: "add_value(1, has_discount)"
 #'
 #'   factors:
 #'     - name: "has_discount"
@@ -36,7 +40,7 @@
 #'         - value: 1
 #'           coefficient: "coefficients.discount_percentage"
 #'
-#'   output_transformation: "multiply_by(total_price, add_value(1, has_discount))"
+#'   output_transformation: "multiply_by(total_price, discount_factor)"
 #' ```
 #'
 #' ## 2. Using the Pricing Model
