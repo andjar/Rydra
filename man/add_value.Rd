@@ -17,3 +17,6 @@ The variable with the term added.
 \description{
 Adds a specified term to a variable.
 }
+\examples{
+add_value(10, 5) # Returns 15
+}

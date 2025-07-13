@@ -3,8 +3,10 @@
 #' This function checks if the parsed YAML configuration list is valid.
 #' It collects all errors and stops if any are found, reporting them all at once.
 #'
-#' @param config A list representing the parsed YAML configuration.
-#' @param model_name The name of the model to validate within the config.
+#' @param config The full configuration list to validate, typically loaded from a YAML file.
+#' @param model_name The name of the specific model block within the `config` to validate.
+#' @param data A list or data frame representing the input data. Used to validate factor
+#'        levels against the data present in this parameter.
 #' @return Invisible `TRUE` if validation succeeds, otherwise stops with an error.
 #' @keywords internal
 validate_config <- function(config, model_name, data) {

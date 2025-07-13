@@ -15,3 +15,7 @@ The squared variable.
 \description{
 Squares a variable.
 }
+\examples{
+square_variable(5) # Returns 25
+square_variable(c(1, 2, 3)) # Returns c(1, 4, 9)
+}

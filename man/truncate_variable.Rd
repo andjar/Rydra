@@ -9,15 +9,20 @@ truncate_variable(x, min_val, max_val)
 \arguments{
 \item{x}{The variable to truncate.}
 
-\item{min_val}{The minimum value.}
+\item{min_val}{The minimum value for truncation.}
 
-\item{max_val}{The maximum value.}
+\item{max_val}{The maximum value for truncation.}
 }
 \value{
 The truncated variable.
 }
 \description{
 Truncates a variable to a specified minimum and maximum range.
-Values less than min_val are set to min_val.
-Values greater than max_val are set to max_val.
+Values less than \code{min_val} are set to \code{min_val}.
+Values greater than \code{max_val} are set to \code{max_val}.
+}
+\examples{
+truncate_variable(c(1, 5, 10, 15, 20), 5, 15) # Returns c(5, 5, 10, 15, 15)
+truncate_variable(0, 1, 10) # Returns 1
+truncate_variable(100, 1, 10) # Returns 10
 }

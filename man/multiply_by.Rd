@@ -9,11 +9,14 @@ multiply_by(value, multiplier)
 \arguments{
 \item{value}{The variable to multiply.}
 
-\item{multiplier}{The multiplier.}
+\item{multiplier}{The multiplier value.}
 }
 \value{
 The variable multiplied by the multiplier.
 }
 \description{
 Multiplies a variable by a specified multiplier.
+}
+\examples{
+multiply_by(10, 5) # Returns 50
 }

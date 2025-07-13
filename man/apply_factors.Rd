@@ -7,11 +7,11 @@
 apply_factors(config, data, model_name)
 }
 \arguments{
-\item{config}{A list representing the parsed YAML configuration.}
+\item{config}{The full configuration list, typically loaded from a YAML file.}
 
-\item{data}{A list containing the input data.}
+\item{data}{A list containing the input data, typically after transformations.}
 
-\item{model_name}{The name of the model configuration block in the YAML.}
+\item{model_name}{The name of the specific model configuration block to be used from the \code{config}.}
 }
 \value{
 A numeric value representing the sum of coefficients from all factors.

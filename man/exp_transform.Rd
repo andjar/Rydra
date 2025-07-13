@@ -9,11 +9,15 @@ exp_transform(x, base = exp(1))
 \arguments{
 \item{x}{The variable to exponentiate.}
 
-\item{base}{The base of the exponentiation (default: exp(1)).}
+\item{base}{The base of the exponentiation. Defaults to \code{exp(1)} (natural exponentiation).}
 }
 \value{
 The exponentiated variable.
 }
 \description{
 Exponentiates a variable.
+}
+\examples{
+exp_transform(2, base = 10) # Returns 100
+exp_transform(2) # Returns exp(2)
 }

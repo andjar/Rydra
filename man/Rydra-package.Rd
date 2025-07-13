@@ -2,8 +2,8 @@
 % Please edit documentation in R/Rydra-package.R
 \docType{package}
 \name{Rydra-package}
-\alias{Rydra-package}
 \alias{Rydra}
+\alias{Rydra-package}
 \title{Rydra: A Lite, Hydra-Inspired Configuration Package for R}
 \description{
 Rydra allows you to define complex calculation configurations in YAML files,
@@ -14,9 +14,9 @@ input data.
 \details{
 Key Functions:
 \itemize{
-\item \code{\link{load_config}}: Loads a YAML configuration file.
-\item \code{\link{hydra_calculate}}: Performs calculations based on a loaded
-configuration and input data.
+  \item \code{\link{load_config}}: Loads a YAML configuration file.
+  \item \code{\link{rydra_calculate}}: Performs calculations based on a loaded
+    configuration and input data.
 }
 }
 \examples{
@@ -36,22 +36,22 @@ configuration and input data.
 
 # 2. Prepare your input data as a list or single-row data frame
 input_data <- list(
-  biochemical_ga = 12, # weeks
-  weight = 70,         # kg
-  age = 30,            # years
-  plgf_machine = 1,    # Corresponds to 'Delfia' in example config
-  race = 1,            # e.g., Caucasian/Other
-  smoking = 0,         # 0 for No, 1 for Yes
-  diabetes_type_i = 0, # 0 for No, 1 for Yes
-  diabetes_type_ii = 0,# 0 for No, 1 for Yes
-  conception = 1,      # e.g., 1 for Spontaneous, 3 for IVF
-  previous = 0         # e.g., 0 for Nulliparous
+  biochemical_ga    = 12, # weeks
+  weight            = 70, # kg
+  age               = 30, # years
+  plgf_machine      = 1,  # Corresponds to 'Delfia' in example config
+  race              = 1,  # e.g., Caucasian/Other
+  smoking           = 0,  # 0 for No, 1 for Yes
+  diabetes_type_i   = 0,  # 0 for No, 1 for Yes
+  diabetes_type_ii  = 0,  # 0 for No, 1 for Yes
+  conception        = 1,  # e.g., 1 for Spontaneous, 3 for IVF
+  previous          = 0   # e.g., 0 for Nulliparous
   # ... any other variables required by your config's transformations or conditions
 )
 
 # 3. Perform the calculation
 if (file.exists(config_path)) {
-  result <- hydra_calculate(config_path = config_path, data = input_data)
+  result <- rydra_calculate(config_path = config_path, data = input_data)
   print(paste("Calculated result:", result))
 } else {
   print("Could not find example_config.yaml")
@@ -64,9 +64,5 @@ if (file.exists(config_path)) {
 }
 
 }
-}
-\author{
-\strong{Maintainer}: Anders Hagen Jarmund \email{anders.h.jarmund@ntnu.no}
-
 }
 \keyword{internal}

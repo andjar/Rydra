@@ -17,3 +17,7 @@ The centered variable.
 \description{
 Subtracts a centering value from a variable.
 }
+\examples{
+center_variable(10, 5) # Returns 5
+center_variable(c(1, 2, 3, 4, 5), 3) # Returns c(-2, -1, 0, 1, 2)
+}

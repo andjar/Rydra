@@ -7,9 +7,12 @@
 validate_config(config, model_name, data)
 }
 \arguments{
-\item{config}{A list representing the parsed YAML configuration.}
+\item{config}{The full configuration list to validate, typically loaded from a YAML file.}
 
-\item{model_name}{The name of the model to validate within the config.}
+\item{model_name}{The name of the specific model block within the \code{config} to validate.}
+
+\item{data}{A list or data frame representing the input data. Used to validate factor
+levels against the data present in this parameter.}
 }
 \value{
 Invisible \code{TRUE} if validation succeeds, otherwise stops with an error.

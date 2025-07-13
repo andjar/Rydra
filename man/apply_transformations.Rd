@@ -12,16 +12,17 @@ apply_transformations(
 )
 }
 \arguments{
-\item{model_yaml_config}{The specific configuration block for the current model
-(e.g., \code{config[[model_name]]}), which should contain a \code{transformations} list.}
+\item{model_yaml_config}{The specific model configuration list (e.g., \code{config[[model_name]]})
+containing transformation definitions.}
 
-\item{data}{A data frame or list containing the input data.}
+\item{data}{A data frame or list containing the input data. This data will be modified
+by adding new transformed columns.}
 
-\item{transformation_R_functions}{A named list of R functions available for transformations
-(e.g., base functions, user-defined functions).}
+\item{transformation_R_functions}{A named list of R functions available for use
+in transformation formulas.}
 
 \item{full_config}{The full top-level configuration list, used to access
-global elements like \code{centering}.}
+global elements like \code{centering} values.}
 }
 \value{
 A data frame with the transformed variables added.

@@ -17,6 +17,21 @@ This function reads a YAML file and returns it as an R list.
 }
 \examples{
 \dontrun{
-  config <- load_config("path/to/your/config.yaml")
+# Load the example configuration file included with the package
+config_path <- system.file("extdata", "example_config.yaml", package = "Rydra")
+
+# Fallback for development when package is not installed
+if (config_path == "" && file.exists("inst/extdata/example_config.yaml")) {
+  config_path <- "inst/extdata/example_config.yaml"
+}
+
+if (file.exists(config_path)) {
+  my_config <- load_config(config_path)
+  # You can now inspect parts of the configuration
+  # print(my_config$plgf_model$reference_paper)
+  # print(names(my_config))
+} else {
+  print("Could not find example_config.yaml for load_config example.")
+}
 }
 }
