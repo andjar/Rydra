@@ -59,4 +59,4 @@ complex_model:
         - value: 1
           coefficient: "intercepts.gender_male"
 
-  output_transformation: "result * 10" 
+  output_transformation: "result * 10"
