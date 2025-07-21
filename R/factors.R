@@ -32,24 +32,34 @@ apply_factors <- function(config, data, model_name) {
     }
 
     if (!is.null(matched_level)) {
-      # Resolve the coefficient path (e.g., "coefficients.unemployed_modifier")
-      path_elements <- strsplit(matched_level$coefficient, "\\.")[[1]]
-      current_val <- model_config
-      valid_path <- TRUE
-      for (el in path_elements) {
-        if (is.list(current_val) && el %in% names(current_val)) {
-          current_val <- current_val[[el]]
-        } else {
-          valid_path <- FALSE
-          break
+      # Handle both direct numeric coefficients and string path coefficients
+      coefficient_value <- matched_level$coefficient
+      
+      if (is.numeric(coefficient_value)) {
+        # Direct numeric coefficient
+        total_factor_coefficient <- total_factor_coefficient + coefficient_value
+      } else if (is.character(coefficient_value)) {
+        # Resolve the coefficient path (e.g., "coefficients.unemployed_modifier")
+        path_elements <- strsplit(coefficient_value, "\\.")[[1]]
+        current_val <- model_config
+        valid_path <- TRUE
+        for (el in path_elements) {
+          if (is.list(current_val) && el %in% names(current_val)) {
+            current_val <- current_val[[el]]
+          } else {
+            valid_path <- FALSE
+            break
+          }
         }
-      }
 
-      if (valid_path && is.numeric(current_val)) {
-        total_factor_coefficient <- total_factor_coefficient + current_val
+        if (valid_path && is.numeric(current_val)) {
+          total_factor_coefficient <- total_factor_coefficient + current_val
+        } else {
+          # This case should ideally be caught by the validator
+          warning(paste0("Coefficient path '", coefficient_value, "' for factor '", factor_name, "' level '", data_value, "' is invalid or not found."))
+        }
       } else {
-        # This case should ideally be caught by the validator
-        warning(paste0("Coefficient for factor '", factor_name, "' level '", data_value, "' is invalid or not found."))
+        warning(paste0("Coefficient for factor '", factor_name, "' level '", data_value, "' must be numeric or a string path."))
       }
     }
     # If no level matches, the validator should have already caught it.
@@ -81,7 +91,8 @@ apply_conditions <- function(model_config, data) {
 
   # Create an environment for evaluating condition expressions.
   # This environment should have access to the 'data' list's elements.
-  eval_env <- new.env(parent = emptyenv())
+  # Use baseenv() as parent to provide access to basic R operators and functions
+  eval_env <- new.env(parent = baseenv())
   for (name in names(data)) {
     assign(name, data[[name]], envir = eval_env)
   }

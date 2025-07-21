@@ -21,7 +21,7 @@ main_model:
 
   transformations:
     - name: "age_centered"
-      formula: "center_variable(age, centering.age)"
+      formula: "center_variable(age, centering$age)"
     - name: "age_squared_centered"
       formula: "square_variable(age_centered)"
     - name: "income_log"
@@ -43,4 +43,4 @@ main_model:
         - value: "Self-employed"
           coefficient: "coefficients.employment_self_employed"
 
-  output_transformation: "result * 100"
+  output_transformation: "multiply_by(result, 100)"

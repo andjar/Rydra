@@ -15,7 +15,7 @@ main_model:
     - name: "user_cost"
       formula: "multiply_by(users, coefficients.price_per_user)"
     - name: "total_price"
-      formula: "add_value(centering.base_price, user_cost)"
+      formula: "add_value(centering$base_price, user_cost)"
     - name: "discount_factor"
       formula: "add_value(1, has_discount)"
 

@@ -32,7 +32,7 @@ apply_transformations <- function(model_yaml_config, data, transformation_R_func
     return(data) # No transformations defined in YAML for this model
   }
 
-  eval_env <- new.env(parent = emptyenv())
+  eval_env <- new.env(parent = baseenv())
 
   # Add the active transformation R functions (e.g., base, custom) to the environment
   if (!is.null(transformation_R_functions) && length(transformation_R_functions) > 0) {

@@ -108,7 +108,7 @@ test_that("Output Transformation Logic", {
 
     # add_value expects 2 args, given 3
     expect_error(run_with_output_transform("add_value(result, 5, 10)"),
-                 regexp = "Error evaluating output transformation .*unused argument (10)") # R's error for too many args
+                 regexp = "Error evaluating output transformation.*unused argument \\(10\\)") # R's error for too many args
 
     # Type error within the function
     expect_error(run_with_output_transform("multiply_by(result, \"a_string\")"),
@@ -124,6 +124,6 @@ test_that("Output Transformation Logic", {
   test_that("Output transformation: using centering constants if available in env", {
     # test_config_output_transform.yaml has centering: { my_center: 3 }
     # initial result = 10. multiply_by(result, centering.my_center) = 10 * 3 = 30
-    expect_equal(run_with_output_transform("multiply_by(result, centering.my_center)"), 30)
+    expect_equal(run_with_output_transform("multiply_by(result, centering$my_center)"), 30)
   })
 })

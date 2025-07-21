@@ -32,7 +32,7 @@ validate_config <- function(config, model_name, data) {
   model_config <- config[[model_name]]
 
   # Check 2: Model block keys
-  required_model_keys <- c("intercepts", "coefficients", "transformations", "factors", "output_transformation")
+  required_model_keys <- c("intercepts", "coefficients", "transformations", "factors")
   for (key in required_model_keys) {
     if (is.null(model_config[[key]])) {
       errors <- c(errors, paste0("Missing required key in '", model_name, "' block: '", key, "'."))

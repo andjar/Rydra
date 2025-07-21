@@ -276,7 +276,8 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
 
     # The output transformation formula needs access to 'result' (total_score)
     # and the allowed transformation functions.
-    eval_env_output <- new.env(parent = emptyenv())
+    # Use baseenv() as parent to provide access to basic R operators and functions
+    eval_env_output <- new.env(parent = baseenv())
     assign("result", total_score, envir = eval_env_output)
 
     # Add available transformation functions to the evaluation environment
