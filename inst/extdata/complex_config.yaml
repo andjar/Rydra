@@ -21,15 +21,15 @@ complex_model:
 
   transformations:
     - name: "age_centered"
-      formula: "center_variable(age, centering.age)"
+      formula: "center_variable(age, centering$age)"
     - name: "age_squared_centered"
       formula: "square_variable(age_centered)"
     - name: "bmi_centered"
-      formula: "center_variable(bmi, centering.bmi)"
+      formula: "center_variable(bmi, centering$bmi)"
     - name: "gender_dependent"
       formula: |
         if (age > 40) {
-          if (gender == 1) intercepts.gender_male else intercepts.gender_female
+          if (gender == 1) intercepts$gender_male else intercepts$gender_female
         } else {
           age_squared_centered + bmi_centered
         }
@@ -41,7 +41,7 @@ complex_model:
     - name: "age_gender_special"
       condition: "age > 50 & gender == 1"
       coefficient: "intercepts.gender_male"
-    # Intentional error: missing 'coefficient' key
+    # Intentional error: missing 'coefficient' key  
     - name: "bad_condition"
       condition: "age < 0"
 
@@ -59,4 +59,4 @@ complex_model:
         - value: 1
           coefficient: "intercepts.gender_male"
 
-  output_transformation: "result * 10"
+  output_transformation: "multiply_by(result, 10)"

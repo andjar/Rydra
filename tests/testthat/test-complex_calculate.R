@@ -4,6 +4,23 @@ test_that("Complex model calculations and error detection", {
 
   config_path <- file.path("..", "..", "inst", "extdata", "complex_config.yaml")
 
+  # Helper function to create a valid config for functional tests
+  create_valid_config <- function() {
+    config <- yaml::read_yaml(config_path)
+    # Fix the intentional error by adding the missing coefficient
+    config$complex_model$conditions[[3]]$coefficient <- "intercepts$baseline"
+    return(config)
+  }
+
+  # Helper function to run calculation with valid config
+  run_with_valid_config <- function(input_data) {
+    config <- create_valid_config()
+    temp_config_file <- tempfile(fileext = ".yaml")
+    yaml::write_yaml(config, temp_config_file)
+    on.exit(unlink(temp_config_file))
+    rydra_calculate(temp_config_file, input_data, model_name = "complex_model")
+  }
+
   # 1. All conditionals triggered
   test_that("Correct calculation: age > 40, gender = 1, bmi > 30, smoker = 1", {
     input_data <- list(age = 55, gender = 1, bmi = 32, smoker = 1)
@@ -31,7 +48,7 @@ test_that("Complex model calculations and error detection", {
     #             = 3.4 + 0.6 + 0.7 = 4.7
     # Output transformation: result * 10 = 4.7 * 10 = 47
     expected_value <- 47
-    expect_equal(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"), expected_value, tolerance = 1e-6)
+    expect_equal(run_with_valid_config(input_data), expected_value, tolerance = 1e-6)
   })
 
   # 2. Else branch, no (bmi/age-gender) conditions triggered
@@ -61,7 +78,7 @@ test_that("Complex model calculations and error detection", {
     #             = 37.05 + 1.7 + 0 = 38.75
     # Output transformation: result * 10 = 38.75 * 10 = 387.5
     expected_value <- 387.5
-    expect_equal(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"), expected_value, tolerance = 1e-6)
+    expect_equal(run_with_valid_config(input_data), expected_value, tolerance = 1e-6)
   })
 
   # 3. Error: missing required factor in data
@@ -87,9 +104,15 @@ test_that("Complex model calculations and error detection", {
 
   # 6. Error: config with coefficient that has no corresponding transformation
   test_that("Error: config with coefficient that has no corresponding transformation", {
+    # Create config with valid conditions but invalid coefficient (missing transformation)
+    config <- create_valid_config() # Start with valid config
+    # The 'missing_var' coefficient exists but there's no corresponding transformation or data
     input_data <- list(age = 35, gender = 0, bmi = 24, smoker = 0)
     # missing_var is in coefficients but not in data or transformations
-    expect_warning(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"),
+    temp_config_file <- tempfile(fileext = ".yaml")
+    yaml::write_yaml(config, temp_config_file)
+    on.exit(unlink(temp_config_file))
+    expect_warning(Rydra::rydra_calculate(temp_config_file, input_data, model_name = "complex_model"),
                    "Coefficient 'missing_var' found, but corresponding data is missing")
   })
 
@@ -118,7 +141,7 @@ test_that("Complex model calculations and error detection", {
     #             = 2.0 + 0.6 + 0 = 2.6
     # Output transformation: result * 10 = 2.6 * 10 = 26
     expected_value <- 26
-    expect_equal(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"), expected_value, tolerance = 1e-6)
+    expect_equal(run_with_valid_config(input_data), expected_value, tolerance = 1e-6)
   })
 
   # 8. Edge case: bmi = 30 (boundary) - This test calculation aligns with current logic
@@ -146,17 +169,17 @@ test_that("Complex model calculations and error detection", {
     #             = 2.8 + 1.7 + 0 = 4.5
     # Output transformation: result * 10 = 4.5 * 10 = 45
     expected_value <- 45
-    expect_equal(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"), expected_value, tolerance = 1e-6)
+    expect_equal(run_with_valid_config(input_data), expected_value, tolerance = 1e-6)
   })
 
   # 9. Error: missing required config key
   test_that("Error: missing required config key", {
-    # Remove 'output_transformation' from config for this test (simulate by editing in-memory)
+    # Remove 'intercepts' from config for this test (simulate by editing in-memory)
     config <- yaml::read_yaml(config_path)
-    config$complex_model$output_transformation <- NULL
+    config$complex_model$intercepts <- NULL
     input_data <- list(age = 35, gender = 0, bmi = 24, smoker = 0)
     expect_error(validate_config(config, "complex_model", input_data),
-                 "Missing required key in 'complex_model' block: 'output_transformation'")
+                 "Missing required key in 'complex_model' block: 'intercepts'")
   })
 
   # --- Tests focusing on specific conditions from complex_config.yaml ---
@@ -181,7 +204,7 @@ test_that("Complex model calculations and error detection", {
     # Total score = 3.2 + 1.7 + 0.2 = 5.1
     # Output = 5.1 * 10 = 51
     expected_value <- 51
-    expect_equal(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"), expected_value, tolerance = 1e-6)
+    expect_equal(run_with_valid_config(input_data), expected_value, tolerance = 1e-6)
   })
 
   test_that("Condition 'age_gender_special' is applied correctly when met", {
@@ -204,7 +227,7 @@ test_that("Complex model calculations and error detection", {
     # Total score = 2.6 + 2.5 + 0.5 = 5.6
     # Output = 5.6 * 10 = 56
     expected_value <- 56
-    expect_equal(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"), expected_value, tolerance = 1e-6)
+    expect_equal(run_with_valid_config(input_data), expected_value, tolerance = 1e-6)
   })
 
   test_that("No specific conditions met (complex_config)", {
@@ -216,6 +239,6 @@ test_that("Complex model calculations and error detection", {
     # Conditional sum = 0
     # Total = 38.75 -> Output = 387.5
     expected_value <- 387.5 # This is same as test #2
-    expect_equal(Rydra::rydra_calculate(config_path, input_data, model_name = "complex_model"), expected_value, tolerance = 1e-6)
+    expect_equal(run_with_valid_config(input_data), expected_value, tolerance = 1e-6)
   })
 })

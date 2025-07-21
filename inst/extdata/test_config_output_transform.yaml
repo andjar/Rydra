@@ -1,6 +1,7 @@
 model_name: "output_transform_test_model"
 
-centering: {} # Not needed for these tests
+centering: 
+  my_center: 3 # Used for testing centering access in output transformations
 
 output_transform_test_model:
   intercepts:
