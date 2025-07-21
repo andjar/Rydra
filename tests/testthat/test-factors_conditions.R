@@ -66,8 +66,8 @@ test_that("Factors and conditionals", {
         intercepts = list(bonus = 5),
         coefficients = list(penalty = -2),
         conditions = list(
-          list(name = "bonus_if_true", condition = "x > 10", coefficient = "intercepts.bonus"),
-          list(name = "penalty_if_false", condition = "y == 0", coefficient = "coefficients.penalty")
+          list(name = "bonus_if_true", condition = "x > 10", coefficient = "intercepts$bonus"),
+          list(name = "penalty_if_false", condition = "y == 0", coefficient = "coefficients$penalty")
         )
       )
     )
@@ -82,8 +82,8 @@ test_that("Factors and conditionals", {
         intercepts = list(bonus = 5),
         coefficients = list(penalty = -2),
         conditions = list(
-          list(name = "bonus_if_true", condition = "x > 10", coefficient = "intercepts.bonus"),
-          list(name = "penalty_if_false", condition = "y == 0", coefficient = "coefficients.penalty")
+          list(name = "bonus_if_true", condition = "x > 10", coefficient = "intercepts$bonus"),
+          list(name = "penalty_if_false", condition = "y == 0", coefficient = "coefficients$penalty")
         )
       )
     )
