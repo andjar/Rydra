@@ -122,8 +122,8 @@ test_that("Factors and conditionals", {
         intercepts = list(age_threshold = 40, bonus_coeff = 5),
         conditions = list(
           list(name = "age_bonus",
-               condition = "age > intercepts.age_threshold", # References model_config$intercepts
-               coefficient = "intercepts.bonus_coeff")
+               condition = "age > intercepts$age_threshold", # References model_config$intercepts
+               coefficient = "intercepts$bonus_coeff")
         )
       )
     )
@@ -132,11 +132,11 @@ test_that("Factors and conditionals", {
 
     expect_equal(
       apply_conditions(model_config = config_complex_condition$test_model_cond, data = data_above_threshold),
-      5 # age (45) > intercepts.age_threshold (40) is true, apply intercepts.bonus_coeff (5)
+      5 # age (45) > intercepts$age_threshold (40) is true, apply intercepts$bonus_coeff (5)
     )
     expect_equal(
       apply_conditions(model_config = config_complex_condition$test_model_cond, data = data_below_threshold),
-      0 # age (35) > intercepts.age_threshold (40) is false
+      0 # age (35) > intercepts$age_threshold (40) is false
     )
   })
 })

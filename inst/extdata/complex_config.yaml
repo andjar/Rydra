@@ -41,10 +41,9 @@ complex_model:
     - name: "age_gender_special"
       condition: "age > 50 & gender == 1"
       coefficient: "intercepts.gender_male"
-    # Condition for negative age (should not occur in normal data)
+    # Intentional error: missing 'coefficient' key  
     - name: "bad_condition"
       condition: "age < 0"
-      coefficient: "intercepts.baseline"
 
   factors:
     - name: "smoker"

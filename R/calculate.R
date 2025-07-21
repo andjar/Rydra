@@ -233,8 +233,11 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
             base_score <- base_score + (coeff_value * transformed_data_list[[coeff_name]])
           } else {
             # This coefficient is not for a direct term, or data is missing/non-numeric
-            # warning(paste0("Coefficient '", coeff_name, "' found, but corresponding data is missing, non-numeric, or coefficient itself is non-numeric. Skipping this term for base score."))
+            warning(paste0("Coefficient '", coeff_name, "' found, but corresponding data is missing, non-numeric, or coefficient itself is non-numeric. Skipping this term for base score."))
           }
+        } else {
+          # Coefficient not found in transformed data - this is the missing_var case
+          warning(paste0("Coefficient '", coeff_name, "' found, but corresponding data is missing, non-numeric, or coefficient itself is non-numeric. Skipping this term for base score."))
         }
         # Coefficients like 'afro_caribbean' are handled by the conditions logic, so they won't be found in transformed_data_list
         # unless they were also created as columns, which is not the case here.
