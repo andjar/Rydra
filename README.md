@@ -13,7 +13,13 @@ To get started with `Rydra`, you first need to install the package from GitHub:
 devtools::install_github("andjar/Rydra")
 ```
 
-Once the package is installed, you can use the `rydra_calculate()` function to perform your calculations. This function takes the following arguments:
+Once the package is installed, you can use the `rydra_calculate()` function to perform your calculations, and the `diffview()` function to compare configuration files.
+
+## Main Functions
+
+### rydra_calculate()
+
+The `rydra_calculate()` function performs calculations based on your YAML configuration. This function takes the following arguments:
 
 *   `config_path`: The path to your YAML configuration file.
 *   `data`: A list or a single-row data frame containing the input data for your calculation.
@@ -74,6 +80,41 @@ custom_transform_list <- list(
 #   transformations = list() # This would likely cause errors for example_config.yaml
 # )
 # print(result_no_defaults)
+```
+
+### diffview()
+
+The `diffview()` function compares two YAML configuration files and displays the differences in a nicely formatted output. This is useful for understanding what has changed between different versions of configuration files.
+
+```r
+# Compare two configuration files
+diff_result <- diffview(
+  config_path1 = "path/to/config1.yaml",
+  config_path2 = "path/to/config2.yaml",
+  ignore_whitespace = TRUE  # Default: ignore whitespace differences
+)
+
+# Print the differences
+cat(diff_result, sep = "\n")
+
+# Example output:
+# === Configuration Diff ===
+# File 1: path/to/config1.yaml
+# File 2: path/to/config2.yaml
+# 
+# ~ centering.age:
+#   - 30
+#   + 35
+# + main_model.intercepts.new_param: 0.1
+# - main_model.coefficients.old_param: 0.02
+```
+
+The diffview function shows:
+- `~` for changed values (shows old and new values)
+- `+` for added elements in the second file
+- `-` for removed elements (present in first file but not second)
+
+The `ignore_whitespace` parameter (default `TRUE`) controls whether whitespace differences in string values are ignored during comparison.
 ```
 
 ## YAML Configuration File

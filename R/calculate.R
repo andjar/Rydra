@@ -77,6 +77,7 @@
   add_value = add_value
 )
 
+#' @export
 rydra_calculate <- function(config_path, data, model_name = "plgf_model", transformations = .default_rydra_transformations) {
   # 1. Load and validate configuration
   config <- load_config(config_path)
