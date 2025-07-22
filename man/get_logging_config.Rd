@@ -12,10 +12,10 @@ get_logging_config(config)
 \value{
 A list with logging configuration:
 \itemize{
-  \item \code{enabled}: Logical, TRUE if logging is enabled, FALSE otherwise.
-  \item \code{path}: Character, the directory path for storing logs.
-                        Defaults to "rydra_logs" if enabled but no path is specified.
-                        Is NULL if logging is disabled.
+\item \code{enabled}: Logical, TRUE if logging is enabled, FALSE otherwise.
+\item \code{path}: Character, the directory path for storing logs.
+Defaults to "rydra_logs" if enabled but no path is specified.
+Is NULL if logging is disabled.
 }
 }
 \description{

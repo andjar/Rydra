@@ -2,8 +2,8 @@
 % Please edit documentation in R/Rydra-package.R
 \docType{package}
 \name{Rydra-package}
-\alias{Rydra}
 \alias{Rydra-package}
+\alias{Rydra}
 \title{Rydra: A Lite, Hydra-Inspired Configuration Package for R}
 \description{
 Rydra allows you to define complex calculation configurations in YAML files,
@@ -14,9 +14,9 @@ input data.
 \details{
 Key Functions:
 \itemize{
-  \item \code{\link{load_config}}: Loads a YAML configuration file.
-  \item \code{\link{rydra_calculate}}: Performs calculations based on a loaded
-    configuration and input data.
+\item \code{\link{load_config}}: Loads a YAML configuration file.
+\item \code{\link{hydra_calculate}}: Performs calculations based on a loaded
+configuration and input data.
 }
 }
 \examples{
@@ -51,7 +51,7 @@ input_data <- list(
 
 # 3. Perform the calculation
 if (file.exists(config_path)) {
-  result <- rydra_calculate(config_path = config_path, data = input_data)
+  result <- hydra_calculate(config_path = config_path, data = input_data)
   print(paste("Calculated result:", result))
 } else {
   print("Could not find example_config.yaml")
@@ -64,5 +64,16 @@ if (file.exists(config_path)) {
 }
 
 }
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://andjar.github.io/Rydra/}
+}
+
+}
+\author{
+\strong{Maintainer}: Anders Hagen Jarmund \email{anders.h.jarmund@ntnu.no}
+
 }
 \keyword{internal}
