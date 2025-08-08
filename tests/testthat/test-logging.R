@@ -6,7 +6,10 @@ test_that("Logging functionality in rydra_calculate", {
 
   # Helper function to create a temporary config file
   create_temp_config <- function(..., log_settings = NULL, dir = tempdir()) {
+    if (!dir.exists(dir)) dir.create(dir, recursive = TRUE, showWarnings = FALSE)
     config_list <- list(...)
+    # Ensure required top-level keys exist
+    if (is.null(config_list$model_name)) config_list$model_name <- "test_log_model"
     if (!is.null(log_settings)) {
       config_list$logging <- log_settings
     }
@@ -20,7 +23,8 @@ test_that("Logging functionality in rydra_calculate", {
           transformations = list(
             list(name = "val_centered", formula = "center_variable(val, centering.val)")
           ),
-          output_transformation = "result + 10"
+          factors = list(),
+          output_transformation = "add_value(result, 10)"
         )
     }
 

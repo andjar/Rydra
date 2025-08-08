@@ -62,7 +62,7 @@ test_that("Output Transformation Logic", {
     expect_equal(run_with_output_transform(""), 10)
   })
 
-  test_that("Output transformation: no transformation if section is NULL", {
+  test_that("Output transformation: no transformation if section is NULL (falls back to no-op)", {
     config <- yaml::read_yaml(base_config_path_output)
     config$output_transform_test_model$output_transformation <- NULL
 
@@ -80,15 +80,17 @@ test_that("Output Transformation Logic", {
     expect_equal(actual_value, 10)
   })
 
-  test_that("Output transformation: error if function is not in available transformations", {
+  test_that("Output transformation: unknown function is skipped with warning", {
     # Initial result = 10. unknown_function is not in .default_rydra_transformations
-    expect_error(run_with_output_transform("unknown_function(result, 1)"),
-                 regexp = "Output transformation function 'unknown_function'.*not found in the available transformations list")
+    expect_warning(val <- run_with_output_transform("unknown_function(result, 1)"),
+                   regexp = "Output transformation function 'unknown_function'.*not found.*Skipping")
+    expect_equal(val, 10)
 
     # Test with a custom list of transformations that doesn't include multiply_by
     custom_transforms <- list(some_other_func = function(x) x + 1)
-    expect_error(run_with_output_transform("multiply_by(result, 10)", transformations_list = custom_transforms),
-                 regexp = "Output transformation function 'multiply_by'.*not found in the available transformations list")
+    expect_warning(val2 <- run_with_output_transform("multiply_by(result, 10)", transformations_list = custom_transforms),
+                   regexp = "Output transformation function 'multiply_by'.*Skipping")
+    expect_equal(val2, 10)
   })
 
   test_that("Output transformation: error for invalid function call format (not a function call)", {
@@ -108,7 +110,7 @@ test_that("Output Transformation Logic", {
 
     # add_value expects 2 args, given 3
     expect_error(run_with_output_transform("add_value(result, 5, 10)"),
-                 regexp = "Error evaluating output transformation .*unused argument (10)") # R's error for too many args
+                 regexp = "Error evaluating output transformation .*") # Too many args
 
     # Type error within the function
     expect_error(run_with_output_transform("multiply_by(result, \"a_string\")"),

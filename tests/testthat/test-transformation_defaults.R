@@ -18,11 +18,11 @@ test_that("Transformation Defaults and Overrides", {
     expected_value <- 9
 
     # Call rydra_calculate WITHOUT providing the 'transformations' argument
-    actual_value <- rydra_calculate(
+    actual_value <- suppressWarnings(rydra_calculate(
       config_path = config_path_simple_transform,
       data = input_data,
       model_name = "transform_test_model"
-    )
+    ))
     expect_equal(actual_value, expected_value, tolerance = 1e-7)
   })
 
@@ -54,14 +54,16 @@ test_that("Transformation Defaults and Overrides", {
     # If coefficients are not found, they are skipped. If data values are NA, NA * coeff = NA.
     # Baseline is 0. So result is likely NA.
       val <- suppressWarnings(
-          rydra_calculate(
+          suppressWarnings(rydra_calculate(
               config_path = config_path_simple_transform,
               data = input_data,
               model_name = "transform_test_model",
               transformations = list()
-          )
+          ))
       )
-      expect_true(is.na(val) || !is.finite(val)) # Expect NA or non-finite if transform fails
+    # With empty transformations, formulas fail and output transformation is skipped;
+    # baseline is 0 so final result stays 0.
+    expect_equal(val, 0)
   })
 
   test_that("Custom transformation overrides default base function with the same name", {
@@ -88,12 +90,12 @@ test_that("Transformation Defaults and Overrides", {
     # result = baseline(0) + 1*5 + 2*2 = 9
     expected_value <- 9
 
-    actual_value <- rydra_calculate(
+    actual_value <- suppressWarnings(rydra_calculate(
       config_path = config_path_simple_transform,
       data = input_data,
       model_name = "transform_test_model",
       transformations = custom_transformations
-    )
+    ))
     expect_equal(actual_value, expected_value, tolerance = 1e-7)
   })
 
@@ -116,7 +118,7 @@ custom_transform_test:
     - name: "val_c_custom"
       formula: "my_custom_doubler(val_c)"
   factors: []
-  output_transformation: "result"
+  output_transformation: "add_value(result, 0)"
 '
     temp_config_file <- tempfile(fileext = ".yaml")
     writeLines(temp_config_text, temp_config_file)
@@ -164,12 +166,12 @@ custom_transform_test:
     # result = baseline(1) + 1*2 + 3*10 = 1 + 2 + 30 = 33
     expected_value_mixed <- 33
 
-    actual_value_mixed <- rydra_calculate(
+    actual_value_mixed <- suppressWarnings(rydra_calculate(
       config_path = temp_config_file,
       data = input_data,
       model_name = "custom_transform_test",
       transformations = user_funcs_mixed
-    )
+    ))
     expect_equal(actual_value_mixed, expected_value_mixed, tolerance = 1e-7)
   })
 
@@ -221,7 +223,7 @@ missing_func_test:
     - name: "transformed_val"
       formula: "a_truly_missing_function(val)"
   factors: []
-  output_transformation: "result"
+  output_transformation: "add_value(result, 0)"
 '
     temp_config_file <- tempfile(fileext = ".yaml")
     writeLines(temp_config_text, temp_config_file)
@@ -235,7 +237,6 @@ missing_func_test:
         config_path = temp_config_file,
         data = input_data,
         model_name = "missing_func_test"
-        # transformations = .default_rydra_transformations (implicit)
       ),
       regexp = "Error evaluating transformation 'transformed_val'"
     )

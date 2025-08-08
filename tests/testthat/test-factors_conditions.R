@@ -50,7 +50,7 @@ test_that("Factors and conditionals", {
     )
     data <- list(color = "green")
     expect_warning(apply_factors(config, data, model_name = "test_model"),
-                   "Coefficient for factor 'color' level 'green' is invalid or not found")
+                   "No matching level found for factor 'color' with value 'green'.")
   })
 
   test_that("apply_factors returns 0 if no factors defined", {

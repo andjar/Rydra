@@ -15,4 +15,4 @@ transform_test_model:
     - name: "val_b_logged"
       formula: "log_transform(val_b)" # Uses base log_transform
   factors: []
-  output_transformation: "result"
+  output_transformation: "add_value(result, 0)"

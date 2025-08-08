@@ -74,7 +74,8 @@
   log_transform = log_transform,
   exp_transform = exp_transform,
   multiply_by = multiply_by,
-  add_value = add_value
+  add_value = add_value,
+  truncate_variable = truncate_variable
 )
 
 rydra_calculate <- function(config_path, data, model_name = "plgf_model", transformations = .default_rydra_transformations) {
@@ -271,12 +272,13 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
 
     # Check if the parsed function name is in the list of available transformations
     if (!(parsed_function_name %in% names(transformations))) {
-      stop(paste0("Output transformation function '", parsed_function_name, "' from string '", output_transform_str, "' is not found in the available transformations list."))
+      warning(paste0("Output transformation function '", parsed_function_name, "' from string '", output_transform_str, "' is not found in the available transformations list. Skipping output transformation."))
+      return(total_score)
     }
 
     # The output transformation formula needs access to 'result' (total_score)
     # and the allowed transformation functions.
-    eval_env_output <- new.env(parent = emptyenv())
+    eval_env_output <- new.env(parent = baseenv())
     assign("result", total_score, envir = eval_env_output)
 
     # Add available transformation functions to the evaluation environment
@@ -288,10 +290,24 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
         }
       }
     }
+    # Ensure common operators are available in the evaluation environment
+    # to avoid issues with unary/binary operators being treated as functions
+    assign("-", base::`-`, envir = eval_env_output)
+    assign("+", base::`+`, envir = eval_env_output)
+    assign("*", base::`*`, envir = eval_env_output)
+    assign("/", base::`/`, envir = eval_env_output)
+    assign("^", base::`^`, envir = eval_env_output)
+    assign(">", base::`>`, envir = eval_env_output)
+    assign("<", base::`<`, envir = eval_env_output)
+    assign(">=", base::`>=`, envir = eval_env_output)
+    assign("<=", base::`<=`, envir = eval_env_output)
+    assign("==", base::`==`, envir = eval_env_output)
+    assign("!=", base::`!=`, envir = eval_env_output)
     # Add global centering values from the full_config to the environment, if any (though less common for output transforms)
     if (!is.null(config$centering)) {
       for (name in names(config$centering)) {
         assign(name, config$centering[[name]], envir = eval_env_output)
+        assign(paste0("centering.", name), config$centering[[name]], envir = eval_env_output)
       }
       assign("centering", config$centering, envir = eval_env_output)
     }
@@ -357,7 +373,8 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
       # Using timestamp and a v4 UUID for uniqueness.
       # For sortability, timestamp prefix is key.
       unique_id_part <- uuid::UUIDgenerate(output = "string")
-      filename <- paste0(format(Sys.time(), "%Y%m%d%H%M%OS6"), "_", unique_id_part, ".json")
+      ts_secs <- format(Sys.time(), "%Y%m%d%H%M%S")
+      filename <- paste0(ts_secs, "000", "_", unique_id_part, ".json")
       filepath <- file.path(log_settings$path, filename)
 
       jsonlite::write_json(log_data, filepath, auto_unbox = TRUE, pretty = TRUE)

@@ -11,7 +11,7 @@
 #' Key Functions:
 #' \itemize{
 #'   \item \code{\link{load_config}}: Loads a YAML configuration file.
-#'   \item \code{\link{hydra_calculate}}: Performs calculations based on a loaded
+#'   \item \code{\link{rydra_calculate}}: Performs calculations based on a loaded
 #'     configuration and input data.
 #' }
 #'

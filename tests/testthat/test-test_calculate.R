@@ -74,13 +74,22 @@ test_that("rydra_calculate main functionality", {
     config <- list(
       centering = list(ga_days = 77),
       plgf_model = list(
+        intercepts = list(baseline = 0),
+        coefficients = list(),
         transformations = list(
           list(name = "ga_centered", formula = "ga * 7 - centering.ga_days")
-        )
+        ),
+        factors = list(),
+        output_transformation = "result"
       )
     )
     data <- data.frame(ga = 12) # ga in weeks
-    transformed_data <- apply_transformations(config, data)
+    transformed_data <- apply_transformations(
+      model_yaml_config = config$plgf_model,
+      data = data,
+      transformation_R_functions = Rydra:::.default_rydra_transformations,
+      full_config = config
+    )
     expect_equal(transformed_data$ga_centered, 12 * 7 - 77)
   })
 
@@ -96,11 +105,11 @@ test_that("rydra_calculate main functionality", {
       )
     )
     data <- list(machine = "delfia", smoking = TRUE)
-    total_conditional_coeff <- apply_conditions(config, data)
+    total_conditional_coeff <- apply_conditions(model_config = config$plgf_model, data = data)
     expect_equal(total_conditional_coeff, 1.5 + 0.5)
 
     data_no_smoke <- list(machine = "other", smoking = FALSE)
-    total_conditional_coeff_no_smoke <- apply_conditions(config, data_no_smoke)
+    total_conditional_coeff_no_smoke <- apply_conditions(model_config = config$plgf_model, data = data_no_smoke)
     expect_equal(total_conditional_coeff_no_smoke, 0)
   })
 })

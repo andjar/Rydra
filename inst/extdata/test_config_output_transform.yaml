@@ -1,6 +1,7 @@
 model_name: "output_transform_test_model"
 
-centering: {} # Not needed for these tests
+centering:
+  my_center: 3
 
 output_transform_test_model:
   intercepts:
@@ -11,4 +12,4 @@ output_transform_test_model:
   conditions: [] # No conditions for simplicity
 
   # We will vary output_transformation in tests by loading and modifying this config
-  output_transformation: "result" # Default to just returning the result
+  output_transformation: "add_value(result, 0)" # Default: no-op via function call

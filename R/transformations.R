@@ -32,7 +32,7 @@ apply_transformations <- function(model_yaml_config, data, transformation_R_func
     return(data) # No transformations defined in YAML for this model
   }
 
-  eval_env <- new.env(parent = emptyenv())
+  eval_env <- new.env(parent = baseenv())
 
   # Add the active transformation R functions (e.g., base, custom) to the environment
   if (!is.null(transformation_R_functions) && length(transformation_R_functions) > 0) {
@@ -49,17 +49,25 @@ apply_transformations <- function(model_yaml_config, data, transformation_R_func
   if (!is.null(full_config$centering)) {
     for (name in names(full_config$centering)) {
       assign(name, full_config$centering[[name]], envir = eval_env)
+      # Allow dot-notation like centering.var_name
+      assign(paste0("centering.", name), full_config$centering[[name]], envir = eval_env)
     }
-    assign("centering", full_config$centering, envir = eval_env) # Allow access to centering.VAR
+    assign("centering", full_config$centering, envir = eval_env) # Allow access to centering$VAR
   }
 
   # Add elements from the current model's configuration (e.g., intercepts, coefficients)
   # to the eval_env, so they can be referenced in transformation formulas.
   if (!is.null(model_yaml_config$intercepts)) {
     assign("intercepts", model_yaml_config$intercepts, envir = eval_env)
+    for (name in names(model_yaml_config$intercepts)) {
+      assign(paste0("intercepts.", name), model_yaml_config$intercepts[[name]], envir = eval_env)
+    }
   }
   if (!is.null(model_yaml_config$coefficients)) {
     assign("coefficients", model_yaml_config$coefficients, envir = eval_env)
+    for (name in names(model_yaml_config$coefficients)) {
+      assign(paste0("coefficients.", name), model_yaml_config$coefficients[[name]], envir = eval_env)
+    }
   }
   # One could selectively add other named lists from model_yaml_config if needed.
 
@@ -89,6 +97,19 @@ apply_transformations <- function(model_yaml_config, data, transformation_R_func
         assign(col_name, data[[col_name]], envir = eval_env)
       }
 
+      # Provide operators explicitly in env for safety and to support parsing edge cases
+      assign("-", base::`-`, envir = eval_env)
+      assign("+", base::`+`, envir = eval_env)
+      assign("*", base::`*`, envir = eval_env)
+      assign("/", base::`/`, envir = eval_env)
+      assign("^", base::`^`, envir = eval_env)
+      assign(">", base::`>`, envir = eval_env)
+      assign("<", base::`<`, envir = eval_env)
+      assign(">=", base::`>=`, envir = eval_env)
+      assign("<=", base::`<=`, envir = eval_env)
+      assign("==", base::`==`, envir = eval_env)
+      assign("!=", base::`!=`, envir = eval_env)
+      assign("if", base::`if`, envir = eval_env)
       result <- eval(parse(text = trans$formula), envir = eval_env)
       data[[trans$name]] <- result
       # Update eval_env with the new column so it can be used in subsequent transformations

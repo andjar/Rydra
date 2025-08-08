@@ -43,4 +43,4 @@ main_model:
         - value: "Self-employed"
           coefficient: "coefficients.employment_self_employed"
 
-  output_transformation: "result * 100"
+  output_transformation: "multiply_by(result, 100)"

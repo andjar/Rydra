@@ -32,27 +32,35 @@ apply_factors <- function(config, data, model_name) {
     }
 
     if (!is.null(matched_level)) {
-      # Resolve the coefficient path (e.g., "coefficients.unemployed_modifier")
-      path_elements <- strsplit(matched_level$coefficient, "\\.")[[1]]
-      current_val <- model_config
-      valid_path <- TRUE
-      for (el in path_elements) {
-        if (is.list(current_val) && el %in% names(current_val)) {
-          current_val <- current_val[[el]]
-        } else {
-          valid_path <- FALSE
-          break
+      # Allow either a direct numeric coefficient OR a string path into model_config
+      if (is.numeric(matched_level$coefficient)) {
+        total_factor_coefficient <- total_factor_coefficient + matched_level$coefficient
+      } else if (is.character(matched_level$coefficient) && nzchar(matched_level$coefficient)) {
+        path_elements <- strsplit(matched_level$coefficient, "\\.")[[1]]
+        current_val <- model_config
+        valid_path <- TRUE
+        for (el in path_elements) {
+          if (is.list(current_val) && el %in% names(current_val)) {
+            current_val <- current_val[[el]]
+          } else {
+            valid_path <- FALSE
+            break
+          }
         }
-      }
 
-      if (valid_path && is.numeric(current_val)) {
-        total_factor_coefficient <- total_factor_coefficient + current_val
+        if (valid_path && is.numeric(current_val)) {
+          total_factor_coefficient <- total_factor_coefficient + current_val
+        } else {
+          warning(paste0("Coefficient for factor '", factor_name, "' level '", data_value, "' is invalid or not found."))
+        }
       } else {
-        # This case should ideally be caught by the validator
-        warning(paste0("Coefficient for factor '", factor_name, "' level '", data_value, "' is invalid or not found."))
+        warning(paste0("Coefficient for factor '", factor_name, "' level '", data_value, "' must be numeric or a non-empty string path."))
       }
     }
-    # If no level matches, the validator should have already caught it.
+    # If no level matches, warn to aid debugging
+    if (is.null(matched_level)) {
+      warning(paste0("No matching level found for factor '", factor_name, "' with value '", data_value, "'."))
+    }
   }
 
   return(total_factor_coefficient)
@@ -81,7 +89,7 @@ apply_conditions <- function(model_config, data) {
 
   # Create an environment for evaluating condition expressions.
   # This environment should have access to the 'data' list's elements.
-  eval_env <- new.env(parent = emptyenv())
+  eval_env <- new.env(parent = baseenv())
   for (name in names(data)) {
     assign(name, data[[name]], envir = eval_env)
   }
@@ -90,9 +98,15 @@ apply_conditions <- function(model_config, data) {
   # This is similar to how apply_transformations sets up its environment.
   if (!is.null(model_config$intercepts)) {
     assign("intercepts", model_config$intercepts, envir = eval_env)
+    for (n in names(model_config$intercepts)) {
+      assign(paste0("intercepts.", n), model_config$intercepts[[n]], envir = eval_env)
+    }
   }
   if (!is.null(model_config$coefficients)) {
     assign("coefficients", model_config$coefficients, envir = eval_env)
+    for (n in names(model_config$coefficients)) {
+      assign(paste0("coefficients.", n), model_config$coefficients[[n]], envir = eval_env)
+    }
   }
   # Potentially add other named lists from model_config if they are commonly referenced by conditions.
 
@@ -111,7 +125,11 @@ apply_conditions <- function(model_config, data) {
 
     condition_evaluates_to_true <- FALSE
     tryCatch({
-      result <- eval(parse(text = condition_item$condition), envir = eval_env)
+      # Support both dot and dollar access for intercepts/coefficients
+      cond_expr_text <- condition_item$condition
+      cond_expr_text <- gsub("\\bintercepts\\.", "intercepts$", cond_expr_text)
+      cond_expr_text <- gsub("\\bcoefficients\\.", "coefficients$", cond_expr_text)
+      result <- eval(parse(text = cond_expr_text), envir = eval_env)
       if (is.logical(result) && length(result) == 1 && !is.na(result) && result) {
         condition_evaluates_to_true <- TRUE
       }

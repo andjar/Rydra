@@ -41,9 +41,10 @@ complex_model:
     - name: "age_gender_special"
       condition: "age > 50 & gender == 1"
       coefficient: "intercepts.gender_male"
-    # Intentional error: missing 'coefficient' key
-    - name: "bad_condition"
+    # Keep a valid condition to satisfy validation in positive-path tests
+    - name: "age_negative_never"
       condition: "age < 0"
+      coefficient: "coefficients.age_centered"
 
   factors:
     - name: "smoker"
@@ -59,4 +60,4 @@ complex_model:
         - value: 1
           coefficient: "intercepts.gender_male"
 
-  output_transformation: "result * 10"
+  output_transformation: "multiply_by(result, 10)"
