@@ -95,7 +95,14 @@ rydra_calculate <- function(config_path, data, model_name = NULL, transformation
     }
   }
 
-  validate_config(config, model_name, data) # Assuming data is the original input here for validation
+  # Validate using a single representative record if batch input was provided
+  data_for_validation <- data
+  if (is.data.frame(data) && nrow(data) >= 1) {
+    data_for_validation <- as.list(data[1, , drop = FALSE])
+  } else if (is.list(data) && !is.data.frame(data) && length(data) > 0 && all(vapply(data, is.list, logical(1)))) {
+    data_for_validation <- data[[1]]
+  }
+  validate_config(config, model_name, data_for_validation)
 
   # Get logging configuration
   log_settings <- get_logging_config(config)
@@ -108,12 +115,30 @@ rydra_calculate <- function(config_path, data, model_name = NULL, transformation
   }
   model_config <- config[[model_name]]
 
-  # Ensure data is a list or a single-row data frame, as this function
-  # is designed for single-instance calculation based on the example.
-  # For batch processing, this function or its callers would need modification.
+  # Batch dispatch using simple lapply/vapply
   if (is.data.frame(data) && nrow(data) > 1) {
-    warning("Input 'data' has multiple rows. This function processes one instance at a time. Using the first row.")
-    data <- data[1, , drop = FALSE]
+    results <- vapply(seq_len(nrow(data)), function(i) {
+      rydra_calculate(
+        config_path = config_path,
+        data = as.list(data[i, , drop = FALSE]),
+        model_name = model_name,
+        transformations = transformations,
+        constants_key = constants_key
+      )
+    }, numeric(1))
+    return(results)
+  }
+  if (is.list(data) && !is.data.frame(data) && length(data) > 0 && all(vapply(data, is.list, logical(1)))) {
+    results <- vapply(seq_along(data), function(i) {
+      rydra_calculate(
+        config_path = config_path,
+        data = data[[i]],
+        model_name = model_name,
+        transformations = transformations,
+        constants_key = constants_key
+      )
+    }, numeric(1))
+    return(results)
   }
   # Convert to list to ensure consistent handling in helper functions
   # and for eval_tidy/env construction.
