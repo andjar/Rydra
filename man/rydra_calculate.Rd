@@ -7,8 +7,9 @@
 rydra_calculate(
   config_path,
   data,
-  model_name = "plgf_model",
-  transformations = .default_rydra_transformations
+  model_name = NULL,
+  transformations = NULL,
+  constants_key = "constants"
 )
 }
 \arguments{
@@ -17,13 +18,18 @@ rydra_calculate(
 \item{data}{A list or a single-row data frame representing the input data
 for which the calculation is to be performed.}
 
-\item{model_name}{The name of the model configuration block in the YAML. Defaults to "plgf_model".}
+\item{model_name}{The name of the model configuration block in the YAML. If NULL,
+the function requires 'model_name' to be specified at the YAML root; otherwise it errors.}
 
 \item{transformations}{A named list of custom transformation functions.
 Defaults to internal list including \code{center_variable}, \code{square_variable},
-\code{log_transform}, \code{exp_transform}, \code{multiply_by}, and \code{add_value}.
+\code{log_transform}, \code{exp_transform}, \code{multiply_by}, \code{add_value}, and \code{truncate_variable}.
 Provide your own list to override defaults.
-Provide \code{list()} to use only functions globally available or defined in YAML.}
+Provide \code{list()} to disable defaults; only functions explicitly provided will be allowed
+for both transformations and output transformation.}
+
+\item{constants_key}{Root key name for global constants injection. Default "constants".
+Legacy configs using \code{centering} are supported automatically.}
 }
 \value{
 The final calculated result after applying all steps.
@@ -80,4 +86,5 @@ if (file.exists(config_path)) {
   print("Could not find example_config.yaml for rydra_calculate examples.")
 }
 }
+
 }

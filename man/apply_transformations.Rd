@@ -8,7 +8,8 @@ apply_transformations(
   model_yaml_config,
   data,
   transformation_R_functions,
-  full_config
+  full_config,
+  constants_key = "constants"
 )
 }
 \arguments{
@@ -22,7 +23,10 @@ by adding new transformed columns.}
 in transformation formulas.}
 
 \item{full_config}{The full top-level configuration list, used to access
-global elements like \code{centering} values.}
+global elements like constants (default key \code{constants}; legacy key \code{centering}).}
+
+\item{constants_key}{Character scalar key at the YAML root to read constants from.
+Defaults to "constants". Legacy configs using \code{centering} are still supported.}
 }
 \value{
 A data frame with the transformed variables added.

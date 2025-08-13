@@ -26,7 +26,7 @@ Once the package is installed, you can use the `rydra_calculate()` function to p
     *   By default, `Rydra` provides a set of base transformation functions: `center_variable`, `square_variable`, `log_transform`, `exp_transform`, `multiply_by`, `add_value`, and `truncate_variable`.
     *   If you provide your own list to this argument, it will *replace* the default set. This means if you want to use a base function alongside your custom ones, you must include it in the list you provide.
     *   Example: `list(my_custom_func = function(x) x*2, log_transform = Rydra::log_transform)`
-    *   Provide `transformations = list()` to use *no* pre-defined R functions from Rydra, relying only on functions globally available in your R session or defined directly in sufficiently complex YAML transformation formulas (though passing functions is cleaner).
+    *   Provide `transformations = list()` to disable all defaults. Only functions explicitly provided in the list are allowed for both transformations and the output transformation. Calls will error if your YAML references functions not present in the list.
 
 Here is an example of how to use the `rydra_calculate()` function:
 
@@ -69,12 +69,12 @@ custom_transform_list <- list(
 # )
 # print(result_custom)
 
-# Example of providing no Rydra transformations (use if functions in YAML are globally defined):
+# Example: providing no Rydra transformations (strict mode; only explicitly provided functions are allowed)
 # result_no_defaults <- rydra_calculate(
 #   config_path = system.file("extdata", "example_config.yaml", package = "Rydra"),
 #   data = input_data,
 #   model_name = "main_model",
-#   transformations = list() # This would likely cause errors for example_config.yaml
+#   transformations = list() # Will error unless your YAML uses no functions or you include them explicitly
 # )
 # print(result_no_defaults)
 ```
@@ -223,6 +223,10 @@ Available built-in transformation functions (which can be used if they are part 
 *   `multiply_by(value, multiplier)`: Multiplies the `value` by `multiplier`.
 *   `add_value(value, term)`: Adds `term` to `value`.
 *   Standard R functions like `log()`, `exp()`, `pmin()`, `pmax()` can also be used if they are part of the `transformations` list (note: base R functions are not included by default in the `transformations` list; only those explicitly defined in `Rydra:::.default_rydra_transformations` or user-provided lists). To use base R functions, you would typically wrap them or add them to the list passed to `rydra_calculate`. For simplicity, `log_transform` and `exp_transform` are provided by default.
+
+Important:
+
+- The function used in `output_transformation` must be present in the active `transformations` list. There is no fallback to globally available functions.
 
 **Examples in YAML:**
 

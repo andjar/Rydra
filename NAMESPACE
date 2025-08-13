@@ -12,7 +12,6 @@ export(rydra_calculate)
 export(square_variable)
 export(subtract_value)
 export(truncate_variable)
-
 importFrom(jsonlite,write_json)
 importFrom(uuid,UUIDgenerate)
 importFrom(yaml,read_yaml)

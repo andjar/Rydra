@@ -14,7 +14,8 @@
 #'        Defaults to internal list including `center_variable`, `square_variable`,
 #'        `log_transform`, `exp_transform`, `multiply_by`, `add_value`, and `truncate_variable`.
 #'        Provide your own list to override defaults.
-#'        Provide `list()` to use only functions globally available or defined in YAML.
+#'        Provide `list()` to disable defaults; only functions explicitly provided will be allowed
+#'        for both transformations and output transformation.
 #' @param constants_key Root key name for global constants injection. Default "constants".
 #'        Legacy configs using `centering` are supported automatically.
 #' @export
@@ -68,22 +69,7 @@
 #' }
 #' }
 #'
-# Define the list of base transformation functions
-# These functions must be exported from the package or otherwise available.
-# Assuming they are exported (which they are, from R/basic_transformations.R)
-.default_rydra_transformations <- list(
-  center_variable = center_variable,
-  square_variable = square_variable,
-  log_transform = log_transform,
-  exp_transform = exp_transform,
-  multiply_by = multiply_by,
-  add_value = add_value,
-  subtract_value = subtract_value,
-  divide_by = divide_by,
-  truncate_variable = truncate_variable
-)
-
-rydra_calculate <- function(config_path, data, model_name = NULL, transformations = .default_rydra_transformations, constants_key = "constants") {
+rydra_calculate <- function(config_path, data, model_name = NULL, transformations = NULL, constants_key = "constants") {
   # 1. Load and validate configuration
   config <- load_config(config_path)
   # Determine model_name from argument or YAML
@@ -93,6 +79,11 @@ rydra_calculate <- function(config_path, data, model_name = NULL, transformation
     } else {
       stop("No model specified. Provide 'model_name' argument or set 'model_name' at the YAML root.")
     }
+  }
+
+  # Bind default transformations at call-time to avoid load-order issues
+  if (is.null(transformations)) {
+    transformations <- .default_rydra_transformations
   }
 
   # Validate using a single representative record if batch input was provided
@@ -314,12 +305,11 @@ rydra_calculate <- function(config_path, data, model_name = NULL, transformation
 
     parsed_function_name <- sub("^\\s*([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\(.*$", "\\1", output_transform_str)
 
-    # Check if the parsed function name is in the list of available transformations
-    if (!(parsed_function_name %in% names(transformations))) {
+    # Require the output transformation function to be explicitly provided
+    if (is.null(transformations) || !(parsed_function_name %in% names(transformations))) {
       stop(paste0(
         "Output transformation function '", parsed_function_name, "' from string '", output_transform_str,
-        "' is not found in the available transformations list. " ,
-        "Add it to the 'transformations' argument (e.g., transformations = list(", parsed_function_name,
+        "' is not found in the available transformations list. Add it to the 'transformations' argument (e.g., transformations = list(", parsed_function_name,
         " = ", parsed_function_name, ")) or use a supported function."))
     }
 
@@ -359,6 +349,7 @@ rydra_calculate <- function(config_path, data, model_name = NULL, transformation
         }
       }
     }
+
     # Ensure common operators are available in the evaluation environment
     # to avoid issues with unary/binary operators being treated as functions
     assign("-", base::`-`, envir = eval_env_output)
@@ -464,3 +455,18 @@ rydra_calculate <- function(config_path, data, model_name = NULL, transformation
 
   return(final_result)
 }
+
+# Define the list of base transformation functions (internal)
+# These functions must be exported from the package or otherwise available.
+# Assuming they are exported (which they are, from R/basic_transformations.R)
+.default_rydra_transformations <- list(
+  center_variable = center_variable,
+  square_variable = square_variable,
+  log_transform = log_transform,
+  exp_transform = exp_transform,
+  multiply_by = multiply_by,
+  add_value = add_value,
+  subtract_value = subtract_value,
+  divide_by = divide_by,
+  truncate_variable = truncate_variable
+)

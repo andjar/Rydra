@@ -34,14 +34,14 @@ test_that("Transformation Defaults and Overrides", {
     # leading to issues in the sum.
     # The functions `center_variable` etc. are not in the empty list, so eval will fail.
     # `eval(parse(text = trans$formula), envir = eval_env)` will error.
-    expect_warning(
+    expect_error(
       rydra_calculate(
         config_path = config_path_simple_transform,
         data = input_data,
         model_name = "transform_test_model",
-        transformations = list() # Provide empty list
+        transformations = list() # Provide empty list; strict mode errors on missing output transform func
       ),
-      regexp = "Error evaluating transformation" # Expect warnings from eval failures
+      regexp = "not found in the available transformations list"
     )
 
     # A more specific error or NA propagation test might be better,
@@ -53,17 +53,7 @@ test_that("Transformation Defaults and Overrides", {
     # If val_a_centered becomes NA, then result becomes NA.
     # If coefficients are not found, they are skipped. If data values are NA, NA * coeff = NA.
     # Baseline is 0. So result is likely NA.
-      val <- suppressWarnings(
-          suppressWarnings(rydra_calculate(
-              config_path = config_path_simple_transform,
-              data = input_data,
-              model_name = "transform_test_model",
-              transformations = list()
-          ))
-      )
-    # With empty transformations, formulas fail and output transformation now errors due to missing function.
-    # So we don't assert a final value here.
-    expect_true(is.numeric(val) || is.na(val) || is.null(val) || is.list(val))
+    # In strict mode, calling again also errors; no further value assertions are applicable here.
   })
 
   test_that("Custom transformation overrides default base function with the same name", {
@@ -150,7 +140,8 @@ custom_transform_test:
         config_path = temp_config_file,
         data = input_data,
         model_name = "custom_transform_test",
-        transformations = user_funcs_only_custom
+        # Include output transformation function explicitly to surface the intended warning about missing center_variable
+        transformations = c(user_funcs_only_custom, list(add_value = Rydra::add_value))
       ),
       regexp = "Error evaluating transformation 'val_a_centered'"
     )
