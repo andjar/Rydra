@@ -81,7 +81,7 @@
 <li>If you provide your own list to this argument, it will <em>replace</em> the default set. This means if you want to use a base function alongside your custom ones, you must include it in the list you provide.</li>
 <li>Example: <code>list(my_custom_func = function(x) x*2, log_transform = Rydra::log_transform)</code>
 </li>
-<li>Provide <code>transformations = list()</code> to use <em>no</em> pre-defined R functions from Rydra, relying only on functions globally available in your R session or defined directly in sufficiently complex YAML transformation formulas (though passing functions is cleaner).</li>
+<li>Provide <code>transformations = list()</code> to disable all defaults. Only functions explicitly provided in the list are allowed for both transformations and the output transformation. Calls will error if your YAML references functions not present in the list.</li>
 </ul>
 </li>
 </ul>
@@ -125,12 +125,12 @@
 <span><span class="co"># )</span></span>
 <span><span class="co"># print(result_custom)</span></span>
 <span></span>
-<span><span class="co"># Example of providing no Rydra transformations (use if functions in YAML are globally defined):</span></span>
+<span><span class="co"># Example: providing no Rydra transformations (strict mode; only explicitly provided functions are allowed)</span></span>
 <span><span class="co"># result_no_defaults &lt;- rydra_calculate(</span></span>
 <span><span class="co">#   config_path = system.file("extdata", "example_config.yaml", package = "Rydra"),</span></span>
 <span><span class="co">#   data = input_data,</span></span>
 <span><span class="co">#   model_name = "main_model",</span></span>
-<span><span class="co">#   transformations = list() # This would likely cause errors for example_config.yaml</span></span>
+<span><span class="co">#   transformations = list() # Will error unless your YAML uses no functions or you include them explicitly</span></span>
 <span><span class="co"># )</span></span>
 <span><span class="co"># print(result_no_defaults)</span></span></code></pre></div>
 </div>
@@ -269,6 +269,10 @@
 <p>The <code>output_transformation</code> section of the YAML configuration file allows you to apply a final transformation to the calculated score. This transformation <strong>must</strong> be a call to a function that is available in the <code>transformations</code> list provided to (or defaulted by) the <code>rydra_calculate</code> function.</p>
 <p>The transformation string should be in the format <code>"function_name(arguments)"</code>. The special variable <code>result</code> (which holds the total aggregated score before this final step) <strong>must</strong> be used as one of the arguments to the function. This mechanism is intended for final scaling, unit conversions, or applying caps/floors using predefined and allowed transformation functions. Raw R code or arbitrary expressions are no longer permitted here to ensure better control and clarity.</p>
 <p>Available built-in transformation functions (which can be used if they are part of the active <code>transformations</code> list) suitable for output transformations include: * <code>multiply_by(value, multiplier)</code>: Multiplies the <code>value</code> by <code>multiplier</code>. * <code>add_value(value, term)</code>: Adds <code>term</code> to <code>value</code>. * Standard R functions like <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">log()</a></code>, <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp()</a></code>, <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin()</a></code>, <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax()</a></code> can also be used if they are part of the <code>transformations</code> list (note: base R functions are not included by default in the <code>transformations</code> list; only those explicitly defined in <code>Rydra:::.default_rydra_transformations</code> or user-provided lists). To use base R functions, you would typically wrap them or add them to the list passed to <code>rydra_calculate</code>. For simplicity, <code>log_transform</code> and <code>exp_transform</code> are provided by default.</p>
+<p>Important:</p>
+<ul>
+<li>The function used in <code>output_transformation</code> must be present in the active <code>transformations</code> list. There is no fallback to globally available functions.</li>
+</ul>
 <p><strong>Examples in YAML:</strong></p>
 <p>To truncate the result to a minimum of 0 and a maximum of 100:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"truncate_variable(result, 0, 100)"</span></span></code></pre></div>
