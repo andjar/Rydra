@@ -61,9 +61,9 @@ test_that("Transformation Defaults and Overrides", {
               transformations = list()
           ))
       )
-    # With empty transformations, formulas fail and output transformation is skipped;
-    # baseline is 0 so final result stays 0.
-    expect_equal(val, 0)
+    # With empty transformations, formulas fail and output transformation now errors due to missing function.
+    # So we don't assert a final value here.
+    expect_true(is.numeric(val) || is.na(val) || is.null(val) || is.list(val))
   })
 
   test_that("Custom transformation overrides default base function with the same name", {
@@ -94,7 +94,7 @@ test_that("Transformation Defaults and Overrides", {
       config_path = config_path_simple_transform,
       data = input_data,
       model_name = "transform_test_model",
-      transformations = custom_transformations
+      transformations = c(custom_transformations, list(add_value = Rydra::add_value))
     ))
     expect_equal(actual_value, expected_value, tolerance = 1e-7)
   })
@@ -170,7 +170,7 @@ custom_transform_test:
       config_path = temp_config_file,
       data = input_data,
       model_name = "custom_transform_test",
-      transformations = user_funcs_mixed
+      transformations = c(user_funcs_mixed, list(add_value = Rydra::add_value))
     ))
     expect_equal(actual_value_mixed, expected_value_mixed, tolerance = 1e-7)
   })

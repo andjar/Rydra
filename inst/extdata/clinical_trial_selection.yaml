@@ -1,6 +1,6 @@
 model_name: "clinical_trial_selection"
 
-centering:
+constants:
   age: 50
   creatinine: 1.0
 
@@ -46,4 +46,4 @@ main_model:
       condition: "creatinine_category == 1"
       coefficient: "coefficients.creatinine_high"
 
-  output_transformation: "pmin(result, 1.0)"
+  output_transformation: "truncate_variable(result, 0, 1.0)"

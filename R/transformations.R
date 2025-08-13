@@ -10,10 +10,12 @@
 #' @param transformation_R_functions A named list of R functions available for use
 #'        in transformation formulas.
 #' @param full_config The full top-level configuration list, used to access
-#'        global elements like `centering` values.
+#'        global elements like constants (default key `constants`; legacy key `centering`).
+#' @param constants_key Character scalar key at the YAML root to read constants from.
+#'        Defaults to "constants". Legacy configs using `centering` are still supported.
 #' @return A data frame with the transformed variables added.
 #' @keywords internal
-apply_transformations <- function(model_yaml_config, data, transformation_R_functions, full_config) {
+apply_transformations <- function(model_yaml_config, data, transformation_R_functions, full_config, constants_key = "constants") {
   if (!is.list(data) && !is.data.frame(data)) {
     stop("Input 'data' must be a list or a data frame.")
   }
@@ -45,14 +47,24 @@ apply_transformations <- function(model_yaml_config, data, transformation_R_func
     }
   }
 
-  # Add global centering values from the full_config to the environment
-  if (!is.null(full_config$centering)) {
-    for (name in names(full_config$centering)) {
-      assign(name, full_config$centering[[name]], envir = eval_env)
-      # Allow dot-notation like centering.var_name
-      assign(paste0("centering.", name), full_config$centering[[name]], envir = eval_env)
+  # Add global constants from the full_config to the environment
+  constants_list <- NULL
+  if (!is.null(constants_key) && nzchar(constants_key) && !is.null(full_config[[constants_key]])) {
+    constants_list <- full_config[[constants_key]]
+  } else if (!is.null(full_config$centering)) { # legacy support
+    constants_list <- full_config$centering
+  }
+  if (!is.null(constants_list)) {
+    for (name in names(constants_list)) {
+      # Provide direct symbols (legacy behavior)
+      assign(name, constants_list[[name]], envir = eval_env)
+      # Provide dotted aliases for both 'constants.' and 'centering.' for compatibility
+      assign(paste0("constants.", name), constants_list[[name]], envir = eval_env)
+      assign(paste0("centering.", name), constants_list[[name]], envir = eval_env)
     }
-    assign("centering", full_config$centering, envir = eval_env) # Allow access to centering$VAR
+    # Provide list aliases for both names
+    assign("constants", constants_list, envir = eval_env)
+    assign("centering", constants_list, envir = eval_env)
   }
 
   # Add elements from the current model's configuration (e.g., intercepts, coefficients)

@@ -104,6 +104,9 @@ test_that("Logging functionality in rydra_calculate", {
     # Filename check: YYYYMMDDHHMMSSxxxxxx_uuid.json
     expect_true(grepl("^\\d{14}\\d{2,6}_[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.json$", log_files[1]))
 
+    # Timestamp has 'Z' suffix (UTC)
+    expect_true(grepl("Z$", log_content$timestamp))
+
     # Clean up
     setwd(original_wd)
     unlink(test_env_dir, recursive = TRUE, force = TRUE)

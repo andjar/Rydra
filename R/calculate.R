@@ -7,13 +7,16 @@
 #' @param config_path Path to the YAML configuration file.
 #' @param data A list or a single-row data frame representing the input data
 #'        for which the calculation is to be performed.
-#' @param model_name The name of the model configuration block in the YAML. Defaults to "plgf_model".
+#' @param model_name The name of the model configuration block in the YAML. If NULL,
+#'        the function requires 'model_name' to be specified at the YAML root; otherwise it errors.
 #' @return The final calculated result after applying all steps.
 #' @param transformations A named list of custom transformation functions.
 #'        Defaults to internal list including `center_variable`, `square_variable`,
-#'        `log_transform`, `exp_transform`, `multiply_by`, and `add_value`.
+#'        `log_transform`, `exp_transform`, `multiply_by`, `add_value`, and `truncate_variable`.
 #'        Provide your own list to override defaults.
 #'        Provide `list()` to use only functions globally available or defined in YAML.
+#' @param constants_key Root key name for global constants injection. Default "constants".
+#'        Legacy configs using `centering` are supported automatically.
 #' @export
 #' @importFrom jsonlite write_json
 #' @importFrom uuid UUIDgenerate
@@ -75,12 +78,23 @@
   exp_transform = exp_transform,
   multiply_by = multiply_by,
   add_value = add_value,
+  subtract_value = subtract_value,
+  divide_by = divide_by,
   truncate_variable = truncate_variable
 )
 
-rydra_calculate <- function(config_path, data, model_name = "plgf_model", transformations = .default_rydra_transformations) {
+rydra_calculate <- function(config_path, data, model_name = NULL, transformations = .default_rydra_transformations, constants_key = "constants") {
   # 1. Load and validate configuration
   config <- load_config(config_path)
+  # Determine model_name from argument or YAML
+  if (is.null(model_name) || !nzchar(as.character(model_name))) {
+    if (!is.null(config$model_name) && is.character(config$model_name) && length(config$model_name) == 1 && nzchar(config$model_name)) {
+      model_name <- config$model_name
+    } else {
+      stop("No model specified. Provide 'model_name' argument or set 'model_name' at the YAML root.")
+    }
+  }
+
   validate_config(config, model_name, data) # Assuming data is the original input here for validation
 
   # Get logging configuration
@@ -119,7 +133,8 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
     model_yaml_config = model_config,
     data = as.data.frame(data_list),
     transformation_R_functions = transformations,
-    full_config = config
+    full_config = config,
+    constants_key = constants_key
   )
   transformed_data_list <- as.list(transformed_data_df)
 
@@ -255,13 +270,17 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
   if (!is.null(model_config$output_transformation) && nzchar(model_config$output_transformation)) {
     output_transform_str <- model_config$output_transformation
 
+    # Enforce single function call only (no trailing tokens) and presence of 'result' argument
+    single_call_pattern <- "^(?s)\\s*([a-zA-Z_][A-Za-z0-9_.]*)\\s*\\(.*\\)\\s*$"
+    if (!grepl(single_call_pattern, output_transform_str, perl = TRUE)) {
+      stop(paste0("Output transformation '", output_transform_str, "' must be a single function call like 'fn(result, ...)'."))
+    }
+    if (!grepl("\\bresult\\b", output_transform_str)) {
+      stop(paste0("Output transformation '", output_transform_str, "' must include 'result' as an argument."))
+    }
+
     # Attempt to parse the function name from the string.
     # This regex extracts the function name before the first parenthesis.
-    # Example: "multiply_by(result, 100)" -> "multiply_by"
-    # Example: "log(result)" -> "log"
-    # Example: "unknown_func(result)" -> "unknown_func"
-    # Example: "result * 10" -> "result " (will not be found in transformations)
-    # Example: "my_custom_function ( result, 10 )" -> "my_custom_function " (trim whitespace later)
     parsed_function_name_match <- regexpr("^\\s*([a-zA-Z_][a-zA-Z0-9_.]*)\\s*\\(", output_transform_str)
 
     if (parsed_function_name_match == -1) {
@@ -272,8 +291,11 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
 
     # Check if the parsed function name is in the list of available transformations
     if (!(parsed_function_name %in% names(transformations))) {
-      warning(paste0("Output transformation function '", parsed_function_name, "' from string '", output_transform_str, "' is not found in the available transformations list. Skipping output transformation."))
-      return(total_score)
+      stop(paste0(
+        "Output transformation function '", parsed_function_name, "' from string '", output_transform_str,
+        "' is not found in the available transformations list. " ,
+        "Add it to the 'transformations' argument (e.g., transformations = list(", parsed_function_name,
+        " = ", parsed_function_name, ")) or use a supported function."))
     }
 
     # The output transformation formula needs access to 'result' (total_score),
@@ -325,13 +347,21 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
     assign("<=", base::`<=`, envir = eval_env_output)
     assign("==", base::`==`, envir = eval_env_output)
     assign("!=", base::`!=`, envir = eval_env_output)
-    # Add global centering values from the full_config to the environment, if any (though less common for output transforms)
-    if (!is.null(config$centering)) {
-      for (name in names(config$centering)) {
-        assign(name, config$centering[[name]], envir = eval_env_output)
-        assign(paste0("centering.", name), config$centering[[name]], envir = eval_env_output)
+    # Add global constants values from the full_config to the environment, if any
+    constants_list <- NULL
+    if (!is.null(constants_key) && nzchar(constants_key) && !is.null(config[[constants_key]])) {
+      constants_list <- config[[constants_key]]
+    } else if (!is.null(config$centering)) { # legacy
+      constants_list <- config$centering
+    }
+    if (!is.null(constants_list)) {
+      for (name in names(constants_list)) {
+        assign(name, constants_list[[name]], envir = eval_env_output)
+        assign(paste0("constants.", name), constants_list[[name]], envir = eval_env_output)
+        assign(paste0("centering.", name), constants_list[[name]], envir = eval_env_output)
       }
-      assign("centering", config$centering, envir = eval_env_output)
+      assign("constants", constants_list, envir = eval_env_output)
+      assign("centering", constants_list, envir = eval_env_output)
     }
 
 
@@ -369,8 +399,9 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
       })
 
 
+      now_utc <- as.POSIXct(Sys.time(), tz = "UTC")
       log_data <- list(
-        timestamp = format(Sys.time(), "%Y-%m-%dT%H:%M:%OS6Z"),
+        timestamp = format(now_utc, "%Y-%m-%dT%H:%M:%OS6Z"),
         invocation_params = list(
           config_path = config_path,
           model_name = model_name,
@@ -395,7 +426,7 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
       # Using timestamp and a v4 UUID for uniqueness.
       # For sortability, timestamp prefix is key.
       unique_id_part <- uuid::UUIDgenerate(output = "string")
-      ts_secs <- format(Sys.time(), "%Y%m%d%H%M%S")
+      ts_secs <- format(now_utc, "%Y%m%d%H%M%S")
       filename <- paste0(ts_secs, "000", "_", unique_id_part, ".json")
       filepath <- file.path(log_settings$path, filename)
 

@@ -14,7 +14,7 @@ The model is defined in the `pricing_model.yaml` file:
 ```yaml
 model_name: "basic_pricing"
 
-centering:
+constants:
   base_price: 100
 
 main_model:
@@ -30,13 +30,11 @@ main_model:
     - name: "user_cost"
       formula: "multiply_by(users, coefficients.price_per_user)"
     - name: "total_price"
-      formula: "add_value(centering.base_price, user_cost)"
+      formula: "add_value(constants.base_price, user_cost)"
     - name: "has_discount_bool"
       formula: "ifelse(is.logical(has_discount), has_discount, tolower(as.character(has_discount)) %in% c('yes','y','true','1'))"
     - name: "discount_factor"
       formula: "add_value(1, ifelse(has_discount_bool, coefficients.discount_percentage, 0))"
-
-  factors: []
 
   output_transformation: "multiply_by(result, discount_factor)"
 ```
@@ -87,7 +85,7 @@ The model computes the final price in three stages:
 
 1) Transformations
 - user_cost = multiply_by(users, coefficients.price_per_user)
-- total_price = add_value(centering.base_price, user_cost)
+- total_price = add_value(constants.base_price, user_cost)
 - has_discount_bool = ifelse(is.logical(has_discount), has_discount, tolower(as.character(has_discount)) %in% c('yes','y','true','1'))
 - discount_factor = add_value(1, ifelse(has_discount_bool, coefficients.discount_percentage, 0))
 

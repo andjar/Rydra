@@ -80,26 +80,34 @@ test_that("Output Transformation Logic", {
     expect_equal(actual_value, 10)
   })
 
-  test_that("Output transformation: unknown function is skipped with warning", {
+  test_that("Output transformation: unknown function errors", {
     # Initial result = 10. unknown_function is not in .default_rydra_transformations
-    expect_warning(val <- run_with_output_transform("unknown_function(result, 1)"),
-                   regexp = "Output transformation function 'unknown_function'.*not found.*Skipping")
-    expect_equal(val, 10)
+    expect_error(run_with_output_transform("unknown_function(result, 1)"),
+                 regexp = "not found in the available transformations list")
 
     # Test with a custom list of transformations that doesn't include multiply_by
     custom_transforms <- list(some_other_func = function(x) x + 1)
-    expect_warning(val2 <- run_with_output_transform("multiply_by(result, 10)", transformations_list = custom_transforms),
-                   regexp = "Output transformation function 'multiply_by'.*Skipping")
-    expect_equal(val2, 10)
+    expect_error(run_with_output_transform("multiply_by(result, 10)", transformations_list = custom_transforms),
+                 regexp = "not found in the available transformations list")
   })
 
   test_that("Output transformation: error for invalid function call format (not a function call)", {
     expect_error(run_with_output_transform("result * 10"),
-                 regexp = "Output transformation 'result \\* 10' is not a valid function call format")
+                 regexp = "must be a single function call")
     expect_error(run_with_output_transform("result + 5"),
-                 regexp = "Output transformation 'result \\+ 5' is not a valid function call format")
+                 regexp = "must be a single function call")
     expect_error(run_with_output_transform("100"), # Just a number, not a function call
-                 regexp = "Output transformation '100' is not a valid function call format")
+                 regexp = "must be a single function call")
+  })
+
+  test_that("Output transformation: must include result as argument", {
+    expect_error(run_with_output_transform("multiply_by(10, 2)"),
+                 regexp = "must include 'result' as an argument")
+  })
+
+  test_that("Output transformation: rejects trailing tokens beyond a single call", {
+    expect_error(run_with_output_transform("multiply_by(result, 10) + 5"),
+                 regexp = "must be a single function call")
   })
 
 

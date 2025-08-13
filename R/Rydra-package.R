@@ -47,7 +47,7 @@
 #'
 #' # 3. Perform the calculation
 #' if (file.exists(config_path)) {
-#'   result <- hydra_calculate(config_path = config_path, data = input_data)
+#'   result <- rydra_calculate(config_path = config_path, data = input_data)
 #'   print(paste("Calculated result:", result))
 #' } else {
 #'   print("Could not find example_config.yaml")

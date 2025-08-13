@@ -1,6 +1,6 @@
 Package: Rydra
 Title: A Hydra-inspired configuration management tool for R
-Version: 0.0.0.9000
+Version: 0.1.0.0
 Authors@R: 
     person("Anders Hagen", "Jarmund", , "anders.h.jarmund@ntnu.no", role = c("aut", "cre"))
 Description: Provides a simple way to manage configurations for calculations, inspired by Hydra.
@@ -16,8 +16,9 @@ Imports:
 RoxygenNote: 7.3.2
 Suggests:
     testthat (>= 3.0.0),
+    quarto,
     knitr,
     rmarkdown
 Config/testthat/edition: 3
 URL: https://andjar.github.io/Rydra/
-VignetteBuilder: knitr
+VignetteBuilder: quarto

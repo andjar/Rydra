@@ -2,6 +2,7 @@
 
 export(add_value)
 export(center_variable)
+export(divide_by)
 export(exp_transform)
 export(get_logging_config)
 export(load_config)
@@ -9,6 +10,7 @@ export(log_transform)
 export(multiply_by)
 export(rydra_calculate)
 export(square_variable)
+export(subtract_value)
 export(truncate_variable)
 
 importFrom(jsonlite,write_json)

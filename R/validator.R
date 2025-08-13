@@ -17,11 +17,24 @@ validate_config <- function(config, model_name, data) {
     stop("Configuration is not a valid list.")
   }
 
-  required_toplevel_keys <- c("model_name", "centering", model_name)
+  # Require the requested model block to exist, but do not force 'model_name' or 'centering' at the root
+  required_toplevel_keys <- c(model_name)
   for (key in required_toplevel_keys) {
     if (is.null(config[[key]])) {
-      errors <- c(errors, paste0("Missing required top-level key: '", key, "'."))
+      errors <- c(errors, paste0("Missing required top-level key (model block): '", key, "'."))
     }
+  }
+
+  # Ensure there is at least one model block defined besides reserved keys
+  reserved_top_level_names <- c("model_name", "centering", "logging")
+  candidate_model_blocks <- setdiff(names(config), reserved_top_level_names)
+  if (length(candidate_model_blocks) == 0) {
+    errors <- c(errors, "No model blocks found in configuration. Define at least one model block at the YAML root.")
+  }
+  # Model names must be unique (YAML parsing into a list will deduplicate, but we still assert on the vector just in case)
+  if (any(duplicated(candidate_model_blocks))) {
+    dupes <- unique(candidate_model_blocks[duplicated(candidate_model_blocks)])
+    errors <- c(errors, paste0("Duplicate model names found at the top level: ", paste(dupes, collapse = ", "), "."))
   }
 
   # If model block is missing, we can't check its contents, so stop early.
@@ -32,7 +45,8 @@ validate_config <- function(config, model_name, data) {
   model_config <- config[[model_name]]
 
   # Check 2: Model block keys
-  required_model_keys <- c("intercepts", "coefficients", "transformations", "factors")
+  # 'factors' is optional; 'centering' is optional at top-level
+  required_model_keys <- c("intercepts", "coefficients", "transformations")
   for (key in required_model_keys) {
     if (is.null(model_config[[key]])) {
       errors <- c(errors, paste0("Missing required key in '", model_name, "' block: '", key, "'."))

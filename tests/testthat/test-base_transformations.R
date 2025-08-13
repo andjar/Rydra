@@ -53,6 +53,23 @@ test_that("exp_transform computes exponential with specified base", {
   expect_equal(exp_transform(0, base = 5), 1)
 })
 
+# subtract_value tests
+test_that("subtract_value subtracts correctly", {
+  expect_equal(subtract_value(10, 3), 7)
+  expect_equal(subtract_value(-5, -2), -3)
+  expect_equal(subtract_value(0, 0), 0)
+  expect_equal(subtract_value(c(1, 2, 3), 2), c(-1, 0, 1))
+})
+
+# divide_by tests
+test_that("divide_by divides correctly and guards zero", {
+  expect_equal(divide_by(10, 2), 5)
+  expect_equal(divide_by(c(10, 20), 10), c(1, 2))
+  expect_equal(divide_by(NA, 2), NA_real_)
+  expect_error(divide_by(1, 0), "Division by zero")
+  expect_error(divide_by(c(1,2,3), c(1,0,1)), "Division by zero")
+})
+
 # truncate_variable tests
 test_that("truncate_variable truncates at lower bound", {
   expect_equal(truncate_variable(5, 10, 20), 10)

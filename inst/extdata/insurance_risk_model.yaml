@@ -1,6 +1,6 @@
 model_name: "insurance_risk"
 
-centering:
+constants:
   age: 40
   bmi: 25
 
@@ -16,7 +16,7 @@ main_model:
 
   transformations:
     - name: "age_centered"
-      formula: "center_variable(age, centering.age)"
+      formula: "center_variable(age, constants.age)"
     - name: "bmi_log"
       formula: "log_transform(bmi)"
 

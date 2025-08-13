@@ -1,3 +1,7 @@
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/andjar/Rydra/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/andjar/Rydra/actions/workflows/R-CMD-check.yaml)
+  <!-- badges: end -->
+
 # Rydra
 
 **A Hydra-inspired configuration management tool for R**
@@ -17,9 +21,9 @@ Once the package is installed, you can use the `rydra_calculate()` function to p
 
 *   `config_path`: The path to your YAML configuration file.
 *   `data`: A list or a single-row data frame containing the input data for your calculation.
-*   `model_name`: (Optional) The name of the model configuration block in your YAML file to use (defaults to a common name like "plgf_model" or the first model found, check package documentation for specifics if not using `model_name` from the YAML root).
+*   `model_name`: (Optional) The name of the model configuration block in your YAML file to use. If omitted, you must specify a `model_name` at the YAML root; otherwise `rydra_calculate()` will error. There is no implicit fallback to the first model.
 *   `transformations`: (Optional) A named list of R functions to be made available for use in the `transformations` section of your YAML configuration.
-    *   By default, `Rydra` provides a set of base transformation functions: `center_variable`, `square_variable`, `log_transform`, and `exp_transform`.
+    *   By default, `Rydra` provides a set of base transformation functions: `center_variable`, `square_variable`, `log_transform`, `exp_transform`, `multiply_by`, `add_value`, and `truncate_variable`.
     *   If you provide your own list to this argument, it will *replace* the default set. This means if you want to use a base function alongside your custom ones, you must include it in the list you provide.
     *   Example: `list(my_custom_func = function(x) x*2, log_transform = Rydra::log_transform)`
     *   Provide `transformations = list()` to use *no* pre-defined R functions from Rydra, relying only on functions globally available in your R session or defined directly in sufficiently complex YAML transformation formulas (though passing functions is cleaner).
@@ -39,8 +43,7 @@ input_data <- list(
 )
 
 # Perform the calculation using default base transformations
-# The `transformations` argument is omitted, so Rydra uses its defaults:
-# center_variable, square_variable, log_transform, exp_transform.
+# The `transformations` argument is omitted, so Rydra uses its defaults.
 # The example_config.yaml uses center_variable, square_variable, and log_transform.
 result <- rydra_calculate(
   config_path = system.file("extdata", "example_config.yaml", package = "Rydra"),
@@ -81,9 +84,9 @@ custom_transform_list <- list(
 The YAML configuration file is the heart of the `Rydra` package. It allows you to define all the parameters, transformations, factors, and coefficients for your specific model. The configuration file has the following structure:
 
 ```yaml
-model_name: "simplified_model"
+model_name: "simplified_model"  # Required if you omit the model_name argument
 
-centering:
+constants:  # Optional. Include only if referenced by transformations
   age: 30
   income: 50000
 
@@ -93,8 +96,8 @@ main_model:
 
   coefficients:
     # Continuous variable coefficients
-    age_centered: 0.05
-    age_squared_centered: -0.02
+    age_centered: 0.05            # Coefficient keys must match variable names present AFTER transformations
+    age_squared_centered: -0.02   # e.g., names created in the 'transformations' block
     income_log: 0.15
 
     # Coefficients for categorical variables
@@ -104,13 +107,13 @@ main_model:
 
   transformations:
     - name: "age_centered"
-      formula: "center_variable(age, centering.age)"
+      formula: "center_variable(age, constants.age)"
     - name: "age_squared_centered"
       formula: "square_variable(age_centered)"
     - name: "income_log"
       formula: "log_transform(income)"
 
-  factors:
+  factors: # Optional
     - name: "student"
       levels:
         - value: 0
@@ -137,6 +140,11 @@ main_model:
 *   `square_variable(x)`: Squares a variable.
 *   `log_transform(x, base = exp(1))`: Log-transforms a variable (natural log by default).
 *   `exp_transform(x, base = exp(1))`: Exponentiates a variable (e^x by default).
+*   `multiply_by(value, multiplier)`: Multiplies a value by a multiplier (useful in output transformations).
+*   `add_value(value, term)`: Adds a term to a value (useful in output transformations).
+*   `subtract_value(value, term)`: Subtracts a term from a value. Thin wrapper over `-` for readability and whitelisting.
+*   `divide_by(value, divisor)`: Divides a value by a divisor. Thin wrapper over `/`; errors on division by zero.
+*   `truncate_variable(x, min_val, max_val)`: Truncates a value to the [min, max] range.
 
 You can also use your own custom transformation functions. As explained in the "Getting Started" section, you can pass a named list of your functions via the `transformations` argument to `rydra_calculate`. If you do so, remember that this list *replaces* the default set of base transformations, so include any base functions you still need (e.g., `list(my_func = ..., log_transform = Rydra::log_transform)`).
 
@@ -149,7 +157,7 @@ For example, the following is a valid sequence of transformations:
 ```yaml
 transformations:
   - name: "age_centered"
-    formula: "center_variable(age, centering.age)"
+    formula: "center_variable(age, constants.age)"
   - name: "age_squared_centered"
     formula: "square_variable(age_centered)"
 ```
@@ -160,7 +168,7 @@ While this is a powerful feature, for the sake of clarity and maintainability, w
 
 ### Factors
 
-The `factors` section of the YAML configuration file allows you to define and manage categorical variables. Each factor has a `name` and a list of `levels`. Each `level` has a `value` (the actual value of the factor in your data) and a `coefficient` (the path to the coefficient in the `coefficients` or `intercepts` section that should be applied when this level is present). You should explicitly define all levels, including the baseline, to ensure proper validation and clarity.
+The `factors` section of the YAML configuration file allows you to define and manage categorical variables. Each factor has a `name` and a list of `levels`. Each `level` has a `value` (the actual value of the factor in your data) and a `coefficient` (the path to the coefficient in the `coefficients` or `intercepts` section that should be applied when this level is present). You should explicitly define all levels, including the baseline, to ensure proper validation and clarity. This section is optional—include it only if you need factor-based adjustments.
 
 ### Conditions
 
@@ -233,6 +241,16 @@ To add 5 to the result:
 output_transformation: "add_value(result, 5)"
 ```
 
+To subtract 5 from the result:
+```yaml
+output_transformation: "subtract_value(result, 5)"
+```
+
+To divide the result by 100:
+```yaml
+output_transformation: "divide_by(result, 100)"
+```
+
 The `log_transform` function (available by default) can also be used:
 ```yaml
 output_transformation: "log_transform(result, base = 10)"
@@ -257,7 +275,7 @@ Let's walk through how a score is calculated with a medium-complex example. We'l
 **Relevant YAML Configuration Snippets:**
 
 ```yaml
-centering:
+constants:
   age: 30
   income: 50000
 
@@ -275,7 +293,7 @@ coefficients:
 
 transformations:
   - name: "age_centered"
-    formula: "center_variable(age, centering.age)"
+    formula: "center_variable(age, constants.age)"
   - name: "age_squared_centered"
     formula: "square_variable(age_centered)"
   - name: "income_log"

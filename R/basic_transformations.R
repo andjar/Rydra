@@ -85,6 +85,40 @@ add_value <- function(value, term) {
   value + term
 }
 
+#' Subtract a term from a value
+#'
+#' Thin wrapper around the base `-` operator for semantic clarity in YAML.
+#'
+#' @param value The value to subtract from.
+#' @param term The term to subtract.
+#' @return The result of `value - term`.
+#' @export
+#' @examples
+#' subtract_value(10, 5) # Returns 5
+#' subtract_value(c(1, 2, 3), 1) # Returns c(0, 1, 2)
+subtract_value <- function(value, term) {
+  value - term
+}
+
+#' Divide a value by a divisor
+#'
+#' Thin wrapper around the base `/` operator. Errors on division by zero.
+#'
+#' @param value The value to divide.
+#' @param divisor The divisor.
+#' @return The result of `value / divisor`.
+#' @export
+#' @examples
+#' divide_by(10, 2) # Returns 5
+#' divide_by(c(10, 20), 10) # Returns c(1, 2)
+#' @seealso multiply_by
+divide_by <- function(value, divisor) {
+  if (any(divisor == 0, na.rm = TRUE)) {
+    stop("Division by zero.")
+  }
+  value / divisor
+}
+
 #' Truncate a variable
 #'
 #' Truncates a variable to a specified minimum and maximum range.

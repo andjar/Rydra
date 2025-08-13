@@ -70,6 +70,34 @@ test_that("rydra_calculate main functionality", {
                  "Configuration file not found: path/to/non_existent_config.yaml")
   })
 
+  test_that("errors if no model_name provided and YAML root has none", {
+    cfg <- list(
+      # no model_name at root
+      simple = list(
+        intercepts = list(baseline = 1),
+        coefficients = list(),
+        transformations = list(),
+        factors = list()
+      )
+    )
+    tmp <- tempfile(fileext = ".yaml"); yaml::write_yaml(cfg, tmp); on.exit(unlink(tmp))
+    expect_error(rydra_calculate(tmp, list()), "No model specified")
+  })
+
+  test_that("uses model_name from YAML root when argument omitted", {
+    cfg <- list(
+      model_name = "m",
+      m = list(
+        intercepts = list(baseline = 1),
+        coefficients = list(),
+        transformations = list(),
+        factors = list()
+      )
+    )
+    tmp <- tempfile(fileext = ".yaml"); yaml::write_yaml(cfg, tmp); on.exit(unlink(tmp))
+    expect_equal(rydra_calculate(tmp, list()), 1)
+  })
+
   test_that("apply_transformations works correctly", {
     config <- list(
       centering = list(ga_days = 77),
@@ -80,7 +108,7 @@ test_that("rydra_calculate main functionality", {
           list(name = "ga_centered", formula = "ga * 7 - centering.ga_days")
         ),
         factors = list(),
-        output_transformation = "result"
+        output_transformation = NULL
       )
     )
     data <- data.frame(ga = 12) # ga in weeks
@@ -91,6 +119,20 @@ test_that("rydra_calculate main functionality", {
       full_config = config
     )
     expect_equal(transformed_data$ga_centered, 12 * 7 - 77)
+  })
+
+  test_that("config without centering/factors runs if not referenced", {
+    cfg <- list(
+      model_name = "m",
+      m = list(
+        intercepts = list(baseline = 2),
+        coefficients = list(),
+        transformations = list() # does not reference centering
+        # factors omitted
+      )
+    )
+    f <- tempfile(fileext = ".yaml"); yaml::write_yaml(cfg, f); on.exit(unlink(f))
+    expect_equal(rydra_calculate(f, list()), 2)
   })
 
   test_that("apply_conditions works correctly", {
