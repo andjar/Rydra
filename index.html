@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">Rydra</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,8 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><div class="section level1">
+  <main id="main" class="col-md-9">
+<div class="section level1">
 <div class="page-header"><h1 id="rydra">Rydra<a class="anchor" aria-label="anchor" href="#rydra"></a>
 </h1></div>
 <p><strong>A Hydra-inspired configuration management tool for R</strong></p>
@@ -72,11 +73,11 @@
 <li>
 <code>data</code>: A list or a single-row data frame containing the input data for your calculation.</li>
 <li>
-<code>model_name</code>: (Optional) The name of the model configuration block in your YAML file to use (defaults to a common name like “plgf_model” or the first model found, check package documentation for specifics if not using <code>model_name</code> from the YAML root).</li>
+<code>model_name</code>: (Optional) The name of the model configuration block in your YAML file to use. If omitted, you must specify a <code>model_name</code> at the YAML root; otherwise <code><a href="reference/rydra_calculate.html">rydra_calculate()</a></code> will error. There is no implicit fallback to the first model.</li>
 <li>
 <code>transformations</code>: (Optional) A named list of R functions to be made available for use in the <code>transformations</code> section of your YAML configuration.
 <ul>
-<li>By default, <code>Rydra</code> provides a set of base transformation functions: <code>center_variable</code>, <code>square_variable</code>, <code>log_transform</code>, and <code>exp_transform</code>.</li>
+<li>By default, <code>Rydra</code> provides a set of base transformation functions: <code>center_variable</code>, <code>square_variable</code>, <code>log_transform</code>, <code>exp_transform</code>, <code>multiply_by</code>, <code>add_value</code>, and <code>truncate_variable</code>.</li>
 <li>If you provide your own list to this argument, it will <em>replace</em> the default set. This means if you want to use a base function alongside your custom ones, you must include it in the list you provide.</li>
 <li>Example: <code>list(my_custom_func = function(x) x*2, log_transform = Rydra::log_transform)</code>
 </li>
@@ -98,8 +99,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Perform the calculation using default base transformations</span></span>
-<span><span class="co"># The `transformations` argument is omitted, so Rydra uses its defaults:</span></span>
-<span><span class="co"># center_variable, square_variable, log_transform, exp_transform.</span></span>
+<span><span class="co"># The `transformations` argument is omitted, so Rydra uses its defaults.</span></span>
 <span><span class="co"># The example_config.yaml uses center_variable, square_variable, and log_transform.</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rydra_calculate.html">rydra_calculate</a></span><span class="op">(</span></span>
 <span>  config_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"example_config.yaml"</span>, package <span class="op">=</span> <span class="st">"Rydra"</span><span class="op">)</span>,</span>
@@ -138,9 +138,9 @@
 <h2 id="yaml-configuration-file">YAML Configuration File<a class="anchor" aria-label="anchor" href="#yaml-configuration-file"></a>
 </h2>
 <p>The YAML configuration file is the heart of the <code>Rydra</code> package. It allows you to define all the parameters, transformations, factors, and coefficients for your specific model. The configuration file has the following structure:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">model_name</span><span class="kw">:</span><span class="at"> </span><span class="st">"simplified_model"</span></span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">model_name</span><span class="kw">:</span><span class="at"> </span><span class="st">"simplified_model"</span><span class="co">  # Required if you omit the model_name argument</span></span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">centering</span><span class="kw">:</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">constants</span><span class="kw">:</span><span class="co">  # Optional. Include only if referenced by transformations</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="at">  </span><span class="fu">age</span><span class="kw">:</span><span class="at"> </span><span class="dv">30</span></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="at">  </span><span class="fu">income</span><span class="kw">:</span><span class="at"> </span><span class="dv">50000</span></span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
@@ -150,8 +150,8 @@
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a></span>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="at">  </span><span class="fu">coefficients</span><span class="kw">:</span></span>
 <span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">    # Continuous variable coefficients</span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="at">    </span><span class="fu">age_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.05</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="at">    </span><span class="fu">age_squared_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.02</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="at">    </span><span class="fu">age_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.05</span><span class="co">            # Coefficient keys must match variable names present AFTER transformations</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="at">    </span><span class="fu">age_squared_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.02</span><span class="co">   # e.g., names created in the 'transformations' block</span></span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="at">    </span><span class="fu">income_log</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.15</span></span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a></span>
 <span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">    # Coefficients for categorical variables</span></span>
@@ -161,13 +161,13 @@
 <span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a></span>
 <span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="at">  </span><span class="fu">transformations</span><span class="kw">:</span></span>
 <span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_centered"</span></span>
-<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="at">      </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"center_variable(age, centering.age)"</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="at">      </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"center_variable(age, constants.age)"</span></span>
 <span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_squared_centered"</span></span>
 <span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="at">      </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"square_variable(age_centered)"</span></span>
 <span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"income_log"</span></span>
 <span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="at">      </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"log_transform(income)"</span></span>
 <span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a></span>
-<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="at">  </span><span class="fu">factors</span><span class="kw">:</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="at">  </span><span class="fu">factors</span><span class="kw">:</span><span class="co"> # Optional</span></span>
 <span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"student"</span></span>
 <span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="at">      </span><span class="fu">levels</span><span class="kw">:</span></span>
 <span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
@@ -197,6 +197,16 @@
 <code>log_transform(x, base = exp(1))</code>: Log-transforms a variable (natural log by default).</li>
 <li>
 <code>exp_transform(x, base = exp(1))</code>: Exponentiates a variable (e^x by default).</li>
+<li>
+<code>multiply_by(value, multiplier)</code>: Multiplies a value by a multiplier (useful in output transformations).</li>
+<li>
+<code>add_value(value, term)</code>: Adds a term to a value (useful in output transformations).</li>
+<li>
+<code>subtract_value(value, term)</code>: Subtracts a term from a value. Thin wrapper over <code>-</code> for readability and whitelisting.</li>
+<li>
+<code>divide_by(value, divisor)</code>: Divides a value by a divisor. Thin wrapper over <code>/</code>; errors on division by zero.</li>
+<li>
+<code>truncate_variable(x, min_val, max_val)</code>: Truncates a value to the [min, max] range.</li>
 </ul>
 <p>You can also use your own custom transformation functions. As explained in the “Getting Started” section, you can pass a named list of your functions via the <code>transformations</code> argument to <code>rydra_calculate</code>. If you do so, remember that this list <em>replaces</em> the default set of base transformations, so include any base functions you still need (e.g., <code>list(my_func = ..., log_transform = Rydra::log_transform)</code>).</p>
 <div class="section level4">
@@ -206,7 +216,7 @@
 <p>For example, the following is a valid sequence of transformations:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">transformations</span><span class="kw">:</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_centered"</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"center_variable(age, centering.age)"</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"center_variable(age, constants.age)"</span></span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_squared_centered"</span></span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"square_variable(age_centered)"</span></span></code></pre></div>
 <p>In this example, <code>age_squared_centered</code> uses the result of <code>age_centered</code>.</p>
@@ -216,7 +226,7 @@
 <div class="section level3">
 <h3 id="factors">Factors<a class="anchor" aria-label="anchor" href="#factors"></a>
 </h3>
-<p>The <code>factors</code> section of the YAML configuration file allows you to define and manage categorical variables. Each factor has a <code>name</code> and a list of <code>levels</code>. Each <code>level</code> has a <code>value</code> (the actual value of the factor in your data) and a <code>coefficient</code> (the path to the coefficient in the <code>coefficients</code> or <code>intercepts</code> section that should be applied when this level is present). You should explicitly define all levels, including the baseline, to ensure proper validation and clarity.</p>
+<p>The <code>factors</code> section of the YAML configuration file allows you to define and manage categorical variables. Each factor has a <code>name</code> and a list of <code>levels</code>. Each <code>level</code> has a <code>value</code> (the actual value of the factor in your data) and a <code>coefficient</code> (the path to the coefficient in the <code>coefficients</code> or <code>intercepts</code> section that should be applied when this level is present). You should explicitly define all levels, including the baseline, to ensure proper validation and clarity. This section is optional—include it only if you need factor-based adjustments.</p>
 </div>
 <div class="section level3">
 <h3 id="conditions">Conditions<a class="anchor" aria-label="anchor" href="#conditions"></a>
@@ -266,8 +276,12 @@
 <div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"multiply_by(result, 100)"</span></span></code></pre></div>
 <p>To add 5 to the result:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"add_value(result, 5)"</span></span></code></pre></div>
+<p>To subtract 5 from the result:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"subtract_value(result, 5)"</span></span></code></pre></div>
+<p>To divide the result by 100:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"divide_by(result, 100)"</span></span></code></pre></div>
 <p>The <code>log_transform</code> function (available by default) can also be used:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"log_transform(result, base = 10)"</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"log_transform(result, base = 10)"</span></span></code></pre></div>
 <p><strong>Important:</strong> * The function used (e.g., <code>multiply_by</code>) must be present in the named list of functions provided via the <code>transformations</code> argument to <code>rydra_calculate</code> (or be part of Rydra’s default set). * The expression must be a single function call. * The <code>result</code> variable must be explicitly passed as an argument to the function.</p>
 </div>
 <div class="section level3">
@@ -286,51 +300,51 @@
 <code>employment_status</code>: “Unemployed”</li>
 </ul>
 <p><strong>Relevant YAML Configuration Snippets:</strong></p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">centering</span><span class="kw">:</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="at">  </span><span class="fu">age</span><span class="kw">:</span><span class="at"> </span><span class="dv">30</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="at">  </span><span class="fu">income</span><span class="kw">:</span><span class="at"> </span><span class="dv">50000</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co"># model_name: example_calculation_model (hypothetical)</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="fu">intercepts</span><span class="kw">:</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="at">  </span><span class="fu">baseline</span><span class="kw">:</span><span class="at"> </span><span class="fl">1.25</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="fu">coefficients</span><span class="kw">:</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="at">  </span><span class="fu">age_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.05</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="at">  </span><span class="fu">age_squared_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.02</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="at">  </span><span class="fu">income_log</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.15</span></span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="at">  </span><span class="fu">student_modifier</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.50</span><span class="co">             # Used by factors</span></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="at">  </span><span class="fu">employment_unemployed</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.25</span><span class="co">      # Used by factors</span></span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">  # (other coefficients for different factor levels or conditions might exist)</span></span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a></span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="fu">transformations</span><span class="kw">:</span></span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_centered"</span></span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"center_variable(age, centering.age)"</span></span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_squared_centered"</span></span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"square_variable(age_centered)"</span></span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"income_log"</span></span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"log_transform(income)"</span></span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a></span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="fu">factors</span><span class="kw">:</span></span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"student"</span></span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="at">    </span><span class="fu">levels</span><span class="kw">:</span></span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.baseline_student_effect"</span><span class="co"> # Hypothetical baseline effect</span></span>
-<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
-<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.student_modifier"</span></span>
-<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"employment_status"</span></span>
-<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a><span class="at">    </span><span class="fu">levels</span><span class="kw">:</span></span>
-<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="st">"Employed"</span></span>
-<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.baseline_employment_effect"</span><span class="co"> # Hypothetical</span></span>
-<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="st">"Unemployed"</span></span>
-<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.employment_unemployed"</span></span>
-<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a><span class="co">      # (other levels)</span></span>
-<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a></span>
-<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a><span class="co"># conditions: (Assume no conditions for this specific example for simplicity, or they evaluate to 0)</span></span>
-<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a><span class="co">#   - name: "some_condition"</span></span>
-<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a><span class="co">#     condition: "age_centered &gt; 15"</span></span>
-<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a><span class="co">#     coefficient: "coefficients.conditional_add_on"</span></span>
-<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a></span>
-<span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"truncate_variable(result, 0, 100)"</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">constants</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="at">  </span><span class="fu">age</span><span class="kw">:</span><span class="at"> </span><span class="dv">30</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="at">  </span><span class="fu">income</span><span class="kw">:</span><span class="at"> </span><span class="dv">50000</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co"># model_name: example_calculation_model (hypothetical)</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="fu">intercepts</span><span class="kw">:</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="at">  </span><span class="fu">baseline</span><span class="kw">:</span><span class="at"> </span><span class="fl">1.25</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="fu">coefficients</span><span class="kw">:</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="at">  </span><span class="fu">age_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.05</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="at">  </span><span class="fu">age_squared_centered</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.02</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="at">  </span><span class="fu">income_log</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.15</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="at">  </span><span class="fu">student_modifier</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.50</span><span class="co">             # Used by factors</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="at">  </span><span class="fu">employment_unemployed</span><span class="kw">:</span><span class="at"> </span><span class="fl">-0.25</span><span class="co">      # Used by factors</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">  # (other coefficients for different factor levels or conditions might exist)</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="fu">transformations</span><span class="kw">:</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_centered"</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"center_variable(age, constants.age)"</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_squared_centered"</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"square_variable(age_centered)"</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"income_log"</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="at">    </span><span class="fu">formula</span><span class="kw">:</span><span class="at"> </span><span class="st">"log_transform(income)"</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="fu">factors</span><span class="kw">:</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"student"</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="at">    </span><span class="fu">levels</span><span class="kw">:</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.baseline_student_effect"</span><span class="co"> # Hypothetical baseline effect</span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.student_modifier"</span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"employment_status"</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="at">    </span><span class="fu">levels</span><span class="kw">:</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="st">"Employed"</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.baseline_employment_effect"</span><span class="co"> # Hypothetical</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="st">"Unemployed"</span></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="at">        </span><span class="fu">coefficient</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients.employment_unemployed"</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co">      # (other levels)</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a></span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="co"># conditions: (Assume no conditions for this specific example for simplicity, or they evaluate to 0)</span></span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a><span class="co">#   - name: "some_condition"</span></span>
+<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a><span class="co">#     condition: "age_centered &gt; 15"</span></span>
+<span id="cb12-43"><a href="#cb12-43" tabindex="-1"></a><span class="co">#     coefficient: "coefficients.conditional_add_on"</span></span>
+<span id="cb12-44"><a href="#cb12-44" tabindex="-1"></a></span>
+<span id="cb12-45"><a href="#cb12-45" tabindex="-1"></a><span class="fu">output_transformation</span><span class="kw">:</span><span class="at"> </span><span class="st">"truncate_variable(result, 0, 100)"</span></span></code></pre></div>
 <p><strong>Calculation Steps:</strong></p>
 <ol style="list-style-type: decimal">
 <li>
@@ -416,16 +430,16 @@
 </h2>
 <p><code>Rydra</code> supports optional logging of calculation details to JSON files. This can be useful for debugging, auditing, or reproducing specific calculations.</p>
 <p>To enable logging, add a <code>logging</code> section to the root of your YAML configuration file:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># At the root of your config.yaml, alongside model_name, centering, etc.</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">logging</span><span class="kw">:</span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="at">  </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span><span class="co">  # Set to true to enable logging</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="at">  </span><span class="fu">path</span><span class="kw">:</span><span class="at"> </span><span class="st">"calculation_logs"</span><span class="co"> # Optional: directory to store log files</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">                           # Defaults to "./rydra_logs/" if enabled and path is not specified</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">                           # Path is relative to the current working directory when rydra_calculate is run.</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="fu">model_name</span><span class="kw">:</span><span class="at"> </span><span class="st">"simplified_model"</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="fu">centering</span><span class="kw">:</span></span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">  # ... rest of your configuration</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># At the root of your config.yaml, alongside model_name, centering, etc.</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">logging</span><span class="kw">:</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="at">  </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span><span class="co">  # Set to true to enable logging</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="at">  </span><span class="fu">path</span><span class="kw">:</span><span class="at"> </span><span class="st">"calculation_logs"</span><span class="co"> # Optional: directory to store log files</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">                           # Defaults to "./rydra_logs/" if enabled and path is not specified</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">                           # Path is relative to the current working directory when rydra_calculate is run.</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="fu">model_name</span><span class="kw">:</span><span class="at"> </span><span class="st">"simplified_model"</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="fu">centering</span><span class="kw">:</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">  # ... rest of your configuration</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="log-file-content">Log File Content<a class="anchor" aria-label="anchor" href="#log-file-content"></a>
 </h3>
@@ -476,6 +490,7 @@
 </div>
 </div>
 </div>
+
   </main><aside class="col-md-3"><div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
@@ -499,7 +514,12 @@
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/andjar/Rydra/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/andjar/Rydra/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>

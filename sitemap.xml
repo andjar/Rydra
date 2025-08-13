@@ -1,6 +1,10 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://andjar.github.io/Rydra/404.html</loc></url>
 <url><loc>https://andjar.github.io/Rydra/LICENSE.html</loc></url>
+<url><loc>https://andjar.github.io/Rydra/articles/clinical-trial-patient-selection.html</loc></url>
+<url><loc>https://andjar.github.io/Rydra/articles/index.html</loc></url>
+<url><loc>https://andjar.github.io/Rydra/articles/insurance-risk-model.html</loc></url>
+<url><loc>https://andjar.github.io/Rydra/articles/pricing-model.html</loc></url>
 <url><loc>https://andjar.github.io/Rydra/authors.html</loc></url>
 <url><loc>https://andjar.github.io/Rydra/index.html</loc></url>
 <url><loc>https://andjar.github.io/Rydra/reference/Rydra-package.html</loc></url>
