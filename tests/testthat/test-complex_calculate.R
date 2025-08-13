@@ -2,7 +2,20 @@ test_that("Complex model calculations and error detection", {
   library(testthat)
   library(Rydra)
 
-  config_path <- file.path("..", "..", "inst", "extdata", "complex_config.yaml")
+  # Robustly resolve config path to work in R CMD check and local dev
+  config_path <- system.file("extdata", "complex_config.yaml", package = "Rydra", mustWork = FALSE)
+  if (identical(config_path, "") || !file.exists(config_path)) {
+    # Fallbacks for dev environments
+    candidate_paths <- c(
+      file.path("..", "..", "inst", "extdata", "complex_config.yaml"),
+      "inst/extdata/complex_config.yaml",
+      "../../inst/extdata/complex_config.yaml"
+    )
+    existing <- candidate_paths[file.exists(candidate_paths)]
+    if (length(existing) > 0) config_path <- existing[[1]]
+  }
+  testthat::expect_true(file.exists(config_path),
+                        info = paste("Config file not found at:", config_path, "CWD:", getwd()))
 
   # 1. All conditionals triggered
   test_that("Correct calculation: age > 40, gender = 1, bmi > 30, smoker = 1", {
