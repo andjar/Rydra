@@ -10,6 +10,7 @@ main_model:
   coefficients:
     price_per_user: 5
     discount_percentage: -0.1
+    total_price: 1
 
   transformations:
     - name: "user_cost"
@@ -17,15 +18,8 @@ main_model:
     - name: "total_price"
       formula: "add_value(centering.base_price, user_cost)"
     - name: "discount_factor"
-      formula: "add_value(1, has_discount)"
+      formula: "add_value(1, multiply_by(has_discount, coefficients.discount_percentage))"
 
+  factors: []
 
-  factors:
-    - name: "has_discount"
-      levels:
-        - value: 0
-          coefficient: "intercepts.baseline"
-        - value: 1
-          coefficient: "coefficients.discount_percentage"
-
-  output_transformation: "multiply_by(total_price, discount_factor)"
+  output_transformation: "multiply_by(result, discount_factor)"

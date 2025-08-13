@@ -276,10 +276,32 @@ rydra_calculate <- function(config_path, data, model_name = "plgf_model", transf
       return(total_score)
     }
 
-    # The output transformation formula needs access to 'result' (total_score)
+    # The output transformation formula needs access to 'result' (total_score),
+    # transformed variables (e.g., those created in `apply_transformations`),
     # and the allowed transformation functions.
     eval_env_output <- new.env(parent = baseenv())
     assign("result", total_score, envir = eval_env_output)
+
+    # Expose transformed variables so output transformations can reference them directly
+    if (!is.null(transformed_data_list) && length(transformed_data_list) > 0) {
+      for (name in names(transformed_data_list)) {
+        assign(name, transformed_data_list[[name]], envir = eval_env_output)
+      }
+    }
+
+    # Also expose model configuration lists for convenience (e.g., coefficients.discount_percentage)
+    if (!is.null(model_config$intercepts)) {
+      assign("intercepts", model_config$intercepts, envir = eval_env_output)
+      for (n in names(model_config$intercepts)) {
+        assign(paste0("intercepts.", n), model_config$intercepts[[n]], envir = eval_env_output)
+      }
+    }
+    if (!is.null(model_config$coefficients)) {
+      assign("coefficients", model_config$coefficients, envir = eval_env_output)
+      for (n in names(model_config$coefficients)) {
+        assign(paste0("coefficients.", n), model_config$coefficients[[n]], envir = eval_env_output)
+      }
+    }
 
     # Add available transformation functions to the evaluation environment
     # This makes functions like multiply_by, log_transform etc. directly callable.
